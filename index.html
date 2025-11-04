@@ -946,6 +946,15 @@
         });
       });
 
+      // Debug Mavo initialization
+      document.addEventListener("mv-load", (e) => {
+        console.log("Mavo loaded", e);
+        const app = getApp();
+        console.log("Mavo app:", app);
+        console.log("Mavo user:", app?.user);
+        console.log("Mavo storage:", app?.storage);
+      });
+
       // Auth state UI wiring
       function getApp() {
         const el = document.querySelector('[mv-app="habits"]');
@@ -961,38 +970,48 @@
         const loginBtn = document.getElementById("btn-login");
         const logoutBtn = document.getElementById("btn-logout");
         const saveBtn = document.getElementById("btn-save");
+        const editBtn = document.querySelector('[mv-action="edit"]');
         const help = document.getElementById("auth-help");
         const overlay = document.getElementById("signin-overlay");
 
+        // Show auth pill only when logged in
         if (pill) {
-          pill.style.display = "flex";
+          pill.style.display = authed ? "flex" : "none";
           const span = pill.querySelector("span");
           if (authed) {
             span.textContent = `Signed in as ${user.name || user.username}`;
-          } else {
-            span.textContent = "Signed out";
           }
         }
 
+        // Show login button only when not logged in
         if (loginBtn) loginBtn.style.display = authed ? "none" : "inline-flex";
-        if (logoutBtn)
-          logoutBtn.style.display = authed ? "inline-flex" : "none";
+        if (logoutBtn) logoutBtn.style.display = authed ? "inline-flex" : "none";
 
-        // Save button remains available (Mavo can trigger login), but we hint when signed out
+        // Edit button always visible, Save button visible in edit mode or when logged in
+        if (editBtn) editBtn.style.display = "inline-flex";
         if (saveBtn) {
-          saveBtn.style.opacity = authed ? "1" : "0.9";
-          saveBtn.style.boxShadow = authed
-            ? "-6px 6px 0 0 #383838"
-            : "-6px 6px 0 0 #383838";
+          const isEditing = app && app.editing;
+          saveBtn.style.display = (isEditing || authed) ? "inline-flex" : "none";
         }
 
-        if (help) help.style.display = authed ? "none" : "flex";
-        if (overlay) overlay.style.display = authed ? "none" : "block";
+        // Hide auth help and overlay - data can be viewed without login
+        if (help) help.style.display = "none";
+        if (overlay) overlay.style.display = "none";
       }
 
       document.addEventListener("mv-load", updateAuthUI);
       document.addEventListener("mv-login", updateAuthUI);
       document.addEventListener("mv-logout", updateAuthUI);
+      document.addEventListener("mv-edit", updateAuthUI);
+      document.addEventListener("mv-save", updateAuthUI);
+
+      // Debug login events
+      document.addEventListener("mv-login", (e) => {
+        console.log("Login event triggered", e);
+      });
+      document.addEventListener("mv-logout", (e) => {
+        console.log("Logout event triggered", e);
+      });
       document.addEventListener("DOMContentLoaded", () => {
         // Attempt initial state update once Mavo attaches
         const tryInit = () => {
@@ -1004,13 +1023,13 @@
         };
         tryInit();
 
-        // Overlay controls
-        const closeBtn = document.getElementById("overlay-close");
-        if (closeBtn)
-          closeBtn.addEventListener("click", () => {
-            const overlay = document.getElementById("signin-overlay");
-            if (overlay) overlay.style.display = "none";
-          });
+        // Overlay controls - no longer needed since overlay is hidden
+        // const closeBtn = document.getElementById("overlay-close");
+        // if (closeBtn)
+        //   closeBtn.addEventListener("click", () => {
+        //     const overlay = document.getElementById("signin-overlay");
+        //     if (overlay) overlay.style.display = "none";
+        //   });
 
         // Set Open Sheet link directly to mv-storage URL
         const main = document.querySelector('[mv-app="habits"]');

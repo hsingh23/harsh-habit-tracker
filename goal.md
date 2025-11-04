@@ -1,4 +1,8 @@
-using style.md , let's create a habit tracker for weekly-habit-tracker-notes.md saved in new file index.html. make mavo app with storage in github: hsingh23/harsh-habit-tracker
+using style.md , let's create a habit tracker for weekly-habit-tracker-notes.md saved in new file index3.html. make mavo app with storage in google sheets, https://docs.google.com/spreadsheets/d/1Myh4hNzs3unZy1cItmJMEOe_3ax0_uMjbhokiO2uZx8/edit?gid=0#gid=0
+
+tell me what I should put into the google sheet to start things off, currently no data. I want to track if I had exerciese, when I slept / if i slept on time, ate on time, had protein, if I did my winddown or not, if I succeeded in sleeping on time, saw the sunlight etc.
+
+I want an UI that incorporates the timeline when I'm doing all of these activities, the habit stacks. And I want to see one day at a time for adding my information. and I want to see this interface for adding today's dates if I'm loved in. If I'm not loved in, then I want to see the dashboard for a week, I want to see the dashboard for a month, and the Google Sheet should be organized so that... I can easily add each day's entry as it happens and it can pull on the date and all the activities that I track and populate the dashboard for a week, a month and I should be able to basically click on it to see the week and month of year. I also should not see the edit button if I'm not logged in.
 
 customize the mavo ui using style.md as well, single page html css and js, no other frameworks, but other libraries are allowed if needed
 

@@ -1,0 +1,8 @@
+Date,Exercise,SleptOnTime,SleepTime,AteOnTime,HadProtein,WinddownRoutine,SawSunlight,Notes,Timestamp
+2024-11-03,true,true,10:30 PM,true,true,true,true,"Great day! Morning run felt energizing and I got plenty of sunlight during my walk.",2024-11-03T23:30:00.000Z
+2024-11-02,false,false,11:45 PM,true,true,false,true,"Struggled with motivation today but still managed good nutrition. Need to work on evening routine.",2024-11-02T23:45:00.000Z
+2024-11-01,true,true,10:15 PM,true,true,true,true,"Perfect start to the month! All habits completed. Morning workout at the gym was excellent.",2024-11-01T22:15:00.000Z
+2024-10-31,true,false,11:30 PM,false,true,false,true,"Halloween was fun but threw off schedule. Still managed exercise and sunlight.",2024-10-31T23:30:00.000Z
+2024-10-30,true,true,10:45 PM,true,true,true,true,"Consistent day. Felt productive and energized throughout the day.",2024-10-30T22:45:00.000Z
+2024-10-29,false,true,10:00 PM,true,true,true,false,"Rest day from exercise but everything else on track. Skipped morning sunlight due to rain.",2024-10-29T22:00:00.000Z
+2024-10-28,true,true,10:20 PM,true,true,true,true,"Strong Monday! Started the week right with all habits completed.",2024-10-28T22:20:00.000Z

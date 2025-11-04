@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Habit Tracker — Daily + Dashboards</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Space+Mono:wght@400&display=swap" rel="stylesheet" />
+
+    <!-- Tailwind (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Mavo Core -->
+    <link rel="stylesheet" href="https://get.mavo.io/mavo.css" />
+    <script src="https://get.mavo.io/mavo.js"></script>
+    <!-- Google Sheets plugin via mv-plugins="gsheets" -->
+
+    <!-- Icons (Lucide) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+  </head>
+  <body
+    class="min-h-screen antialiased"
+    style="
+      background: #f4efea;
+      color: #383838;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      letter-spacing: 0.02em;
+    "
+  >
+    <main
+      id="habit-app"
+      mv-app="habitDaily"
+      mv-bar="none"
+      mv-plugins="gsheets"
+      mv-storage="https://docs.google.com/spreadsheets/d/1Myh4hNzs3unZy1cItmJMEOe_3ax0_uMjbhokiO2uZx8/edit?gid=1631012766"
+      mv-storage-sheet="Habit3"
+      mv-storage-options="transformHeadings"
+      class="mx-auto max-w-7xl px-6 py-8 md:py-10"
+    >
+      <!-- Header -->
+      <header class="flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div
+            class="flex items-center justify-center select-none"
+            style="
+              width: 44px;
+              height: 44px;
+              border: 2px solid #383838;
+              border-radius: 2px;
+              background: #ffffff;
+              box-shadow: -6px 6px 0 0 #383838;
+            "
+          >
+            <span style="font-family: 'Space Mono', monospace; font-size: 18px; letter-spacing: -0.02em">HT</span>
+          </div>
+          <div class="uppercase" style="font-family: 'Space Mono', monospace; font-size: 20px; letter-spacing: -0.02em">
+            Habit Tracker
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 md:gap-3">
+          <!-- Status pill updates via JS when logged in/out -->
+          <div id="auth-pill" class="hidden md:flex items-center gap-2"
+               style="border: 2px solid #383838; border-radius: 2px; background: #ffffff; color: #383838; font-size: 12px; padding: 8px 10px;">
+            <i data-lucide="user" style="width: 16px; height: 16px"></i>
+            <span>Signed out</span>
+          </div>
+
+          <!-- Save only visible when logged in -->
+          <button id="btn-save" mv-action="save"
+            class="hidden md:inline-flex items-center gap-2 transition-transform hover:-translate-y-1 hover:translate-x-1"
+            style="border: 2px solid #383838; border-radius: 2px; background: #6fc2ff; color: #383838; font-weight: 500; font-size: 14px; padding: 12px 14px; box-shadow: -6px 6px 0 0 #383838;">
+            <i data-lucide="save" style="width: 18px; height: 18px"></i>
+            <span class="uppercase">Save</span>
+          </button>
+
+          <button id="btn-login" mv-action="login"
+            class="inline-flex items-center gap-2 transition-transform"
+            style="border: 2px solid #383838; border-radius: 2px; background: #ffffff; color: #383838; font-weight: 500; font-size: 14px; padding: 12px 14px;">
+            <i data-lucide="log-in" style="width: 18px; height: 18px"></i>
+            <span class="uppercase">Login</span>
+          </button>
+          <button id="btn-logout" mv-action="logout"
+            class="hidden md:inline-flex items-center gap-2 transition-transform"
+            style="border: 2px solid #383838; border-radius: 2px; background: #ffffff; color: #383838; font-weight: 500; font-size: 14px; padding: 12px 14px;">
+            <i data-lucide="log-out" style="width: 18px; height: 18px"></i>
+            <span class="uppercase">Logout</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Divider -->
+      <div class="my-6" style="height: 2px; background: #383838; opacity: 0.15"></div>
+
+      <!-- Top Controls -->
+      <section class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+        <!-- Today selector + quick-add (visible when logged in) -->
+        <div class="col-span-2 flex flex-col gap-3"
+             style="border: 2px solid #383838; border-radius: 2px; background: #ffffff; box-shadow: -8px 8px 0 0 #383838;">
+          <div class="p-5 md:p-6 flex items-center justify-between gap-4">
+            <div>
+              <div class="inline-block" style="font-family: 'Space Mono', monospace; text-transform: uppercase; font-size: 12px; background: #383838; color: #ffffff; padding: 6px 10px; border-radius: 2px;">Today</div>
+              <h2 class="mt-2" style="font-size: 26px; letter-spacing: -0.02em; line-height: 1.2; text-transform: uppercase; font-weight: 500;">Add or update today's entry</h2>
+            </div>
+            <div class="flex items-center gap-2">
+              <input id="selectedDate" property="selectedDate" type="date" class="focus:outline-none"
+                     style="background: #ffffff; border: 2px solid #383838; border-radius: 2px; padding: 10px 12px; font-size: 14px;" />
+              <button id="btn-add-today" mv-action="add(entry)"
+                class="requires-login inline-flex items-center gap-2 transition-transform hover:-translate-y-1 hover:translate-x-1"
+                style="border: 2px solid #383838; border-radius: 2px; background: #6fc2ff; color: #383838; font-weight: 500; font-size: 14px; padding: 10px 12px; box-shadow: -6px 6px 0 0 #383838;">
+                <i data-lucide="plus" style="width: 18px; height: 18px"></i>
+                <span class="uppercase">Add Today's Row</span>
+              </button>
+            </div>
+          </div>
+          <div id="auth-help" class="px-5 pb-5 md:px-6 md:pb-6 hidden" style="font-weight: 300;">
+            Please sign in to add or edit today's entry. Weekly and monthly dashboards are always visible below.
+          </div>
+        </div>
+
+        <!-- Sheet + Filters -->
+        <div class="col-span-1 flex flex-col gap-3"
+             style="border: 2px solid #383838; border-radius: 2px; background: rgba(248, 248, 247, 0.7); box-shadow: -8px 8px 0 0 #383838;">
+          <div class="p-5 md:p-6">
+            <div class="uppercase" style="font-family: 'Space Mono', monospace; font-size: 12px">Data</div>
+            <a id="open-sheet" href="https://docs.google.com/spreadsheets/d/1Myh4hNzs3unZy1cItmJMEOe_3ax0_uMjbhokiO2uZx8/edit?gid=1631012766" target="_blank" rel="noopener"
+               class="mt-2 inline-flex items-center gap-2 transition-transform hover:-translate-y-1 hover:translate-x-1"
+               style="border: 2px solid #383838; border-radius: 2px; background: #6fc2ff; color: #383838; font-weight: 500; font-size: 14px; padding: 10px 12px; box-shadow: -6px 6px 0 0 #383838;">
+              <i data-lucide="table" style="width: 18px; height: 18px"></i>
+              <span class="uppercase">Open Sheet</span>
+            </a>
+            <div class="mt-4 grid grid-cols-2 gap-3">
+              <div>
+                <div class="uppercase" style="font-family: 'Space Mono', monospace; font-size: 12px">Week Start</div>
+                <input property="week_filter" type="date" class="mt-1 w-full focus:outline-none"
+                       style="background: #ffffff; border: 2px solid #383838; border-radius: 2px; padding: 10px 12px; font-size: 14px;" />
+              </div>
+              <div>
+                <div class="uppercase" style="font-family: 'Space Mono', monospace; font-size: 12px">Month</div>
+                <input property="month_filter" type="month" class="mt-1 w-full focus:outline-none"
+                       style="background: #ffffff; border: 2px solid #383838; border-radius: 2px; padding: 10px 12px; font-size: 14px;" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Entries Collection: Single source of truth (first collection for gsheets) -->
+      <section class="mt-8">
+        <div class="inline-block" style="font-family: 'Space Mono', monospace; text-transform: uppercase; font-size: 12px; background: #383838; color: #ffffff; padding: 6px 10px; border-radius: 2px;">Entries</div>
+        <div class="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div mv-list property="entry" mv-item-bar="none" class="contents">
+            <!-- Entry Card Template -->
+            <article mv-list-item class="flex flex-col"
+              data-date="[date]"
+              style="border: 2px solid #383838; border-radius: 2px; background: #ffffff; box-shadow: -8px 8px 0 0 #383838;">
+
+              <!-- Header (date + quick flags) -->
+              <div class="p-5 flex items-center justify-between gap-3" style="border-bottom: 2px solid #383838;">
+                <div class="flex items-center gap-3">
+                  <div class="inline-block" style="font-family: 'Space Mono', monospace; text-transform: uppercase; font-size: 12px; background: #383838; color: #ffffff; padding: 6px 10px; border-radius: 2px;">
+                    <span>[if(name, name, 'Day')]</span>
+                  </div>
+                  <input property="name" class="hidden" />
+                </div>
+                <input property="date" type="date" class="focus:outline-none"
+                  style="background: #ffffff; border: 2px solid #383838; border-radius: 2px; padding: 6px 8px; font-size: 12px;" />
+              </div>
+
+              <!-- Summary strip (always visible) -->
+              <div class="p-4 grid grid-cols-3 gap-2 md:grid-cols-6">
+                <div class="flex items-center gap-1" title="Exercise" style="font-size: 12px;">
+                  <i data-lucide="activity" style="width: 16px; height: 16px"></i>
+                  <span>[if(exercise, '✔', '—')]</span>
+                </div>
+                <div class="flex items-center gap-1" title="Slept on time" style="font-size: 12px;">
+                  <i data-lucide="moon" style="width: 16px; height: 16px"></i>
+                  <span>[if(slept_on_time, '✔', '—')]</span>
+                </div>
+                <div class="flex items-center gap-1" title="Ate on time" style="font-size: 12px;">
+                  <i data-lucide="utensils" style="width: 16px; height: 16px"></i>
+                  <span>[if(eat_on_time, '✔', '—')]</span>
+                </div>
+                <div class="flex items-center gap-1" title="Protein" style="font-size: 12px;">
+                  <i data-lucide="check-circle-2" style="width: 16px; height: 16px"></i>
+                  <span>[if(protein, '✔', '—')]</span>
+                </div>
+                <div class="flex items-center gap-1" title="Wind-down" style="font-size: 12px;">
+                  <i data-lucide="timer" style="width: 16px; height: 16px"></i>
+                  <span>[if(winddown_done, '✔', '—')]</span>
+                </div>
+                <div class="flex items-center gap-1" title="Sunlight" style="font-size: 12px;">
+                  <i data-lucide="sun" style="width: 16px; height: 16px"></i>
+                  <span>[if(sunlight, '✔', '—')]</span>
+                </div>
+              </div>
+
+              <!-- Editor Panel (shown for selected date when logged in; JS toggles visibility) -->
+              <div class="editor-panel hidden">
+                <div class="px-5 pt-3 grid grid-cols-1 gap-3">
+                  <!-- Habit toggles (custom, large touch targets) -->
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <button mv-action="set(exercise = !exercise)"
+                      class="w-full flex items-center justify-between gap-4 text-left transition-colors"
+                      style="border: 2px solid #383838; border-radius: 2px; background: #ffffff; padding: 10px 12px;">
+                      <div class="flex items-center gap-3">
+                        <div class="flex items-center justify-center" style="width: 22px; height: 22px; border: 2px solid #383838; border-radius: 2px; background: #ffffff;">
+                          <i data-lucide="check" mv-if="exercise" style="width: 16px; height: 16px"></i>
+                        </div>
+                        <span style="font-size: 14px">Exercise</span>
+                      </div>
+                    </button>
+                    <input property="exercise" type="checkbox" class="hidden" />
+
+                    <button mv-action="set(slept_on_time = !slept_on_time)"
+                      class="w-full flex items-center justify-between gap-4 text-left transition-colors"
+                      style="border: 2px solid #383838; border-radius: 2px; background: #ffffff; padding: 10px 12px;">
+                      <div class="flex items-center gap-3">
+                        <div class="flex items-center justify-center" style="width: 22px; height: 22px; border: 2px solid #383838; border-radius: 2px; background: #ffffff;">
+                          <i data-lucide="check" mv-if="slept_on_time" style="width: 16px; height: 16px"></i>
+                        </div>
+                        <span style="font-size: 14px">Slept on time</span>
+                      </div>
+                    </button>
+                    <input property="slept_on_time" type="checkbox" class="hidden" />
+
+                    <button mv-action="set(eat_on_time = !eat_on_time)"
+                      class="w-full flex items-center justify-between gap-4 text-left transition-colors"
+                      style="border: 2px solid #383838; border-radius: 2px; background: #ffffff; padding: 10px 12px;">
+                      <div class="flex items-center gap-3">
+                        <div class="flex items-center justify-center" style="width: 22px; height: 22px; border: 2px solid #383838; border-radius: 2px; background: #ffffff;">
+                          <i data-lucide="check" mv-if="eat_on_time" style="width: 16px; height: 16px"></i>
+                        </div>
+                        <span style="font-size: 14px">Ate on time</span>
+                      </div>
+                    </button>
+                    <input property="eat_on_time" type="checkbox" class="hidden" />
+
+                    <button mv-action="set(protein = !protein)"
+                      class="w-full flex items-center justify-between gap-4 text-left transition-colors"
+                      style="border: 2px solid #383838; border-radius: 2px; background: #ffffff; padding: 10px 12px;">
+                      <div class="flex items-center gap-3">
+                        <div class="flex items-center justify-center" style="width: 22px; height: 22px; border: 2px solid #383838; border-radius: 2px; background: #ffffff;">
+                          <i data-lucide="check" mv-if="protein" style="width: 16px; height: 16px"></i>
+                        </div>
+                        <span style="font-size: 14px">Protein</span>
+                      </div>
+                    </button>
+                    <input property="protein" type="checkbox" class="hidden" />
+
+                    <button mv-action="set(winddown_done = !winddown_done)"
+                      class="w-full flex items-center justify-between gap-4 text-left transition-colors"
+                      style="border: 2px solid #383838; border-radius: 2px; background: #ffffff; padding: 10px 12px;">
+                      <div class="flex items-center gap-3">
+                        <div class="flex items-center justify-center" style="width: 22px; height: 22px; border: 2px solid #383838; border-radius: 2px; background: #ffffff;">
+                          <i data-lucide="check" mv-if="winddown_done" style="width: 16px; height: 16px"></i>
+                        </div>
+                        <span style="font-size: 14px">Wind-down done</span>
+                      </div>
+                    </button>
+                    <input property="winddown_done" type="checkbox" class="hidden" />
+
+                    <button mv-action="set(sunlight = !sunlight)"
+                      class="w-full flex items-center justify-between gap-4 text-left transition-colors"
+                      style="border: 2px solid #383838; border-radius: 2px; background: #ffffff; padding: 10px 12px;">
+                      <div class="flex items-center gap-3">
+                        <div class="flex items-center justify-center" style="width: 22px; height: 22px; border: 2px solid #383838; border-radius: 2px; background: #ffffff;">
+                          <i data-lucide="check" mv-if="sunlight" style="width: 16px; height: 16px"></i>
+                        </div>
+                        <span style="font-size: 14px">Saw sunlight</span>
+                      </div>
+                    </button>
+                    <input property="sunlight" type="checkbox" class="hidden" />
+                  </div>
+
+                  <!-- Timeline / Habit stack times -->
+                  <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <div class="uppercase" style="font-family: 'Space Mono', monospace; font-size: 12px">Sleep Start</div>
+                      <input property="sleep_start" type="time" class="mt-1 w-full focus:outline-none" style="background: #ffffff; border: 2px solid #383838; border-radius: 2px; padding: 10px 12px; font-size: 14px;" />
+                    </div>
+                    <div>
+                      <div class="uppercase" style="font-family: 'Space Mono', monospace; font-size: 12px">Sleep End</div>
+                      <input property="sleep_end" type="time" class="mt-1 w-full focus:outline-none" style="background: #ffffff; border: 2px solid #383838; border-radius: 2px; padding: 10px 12px; font-size: 14px;" />
+                    </div>
+                    <div>
+                      <div class="uppercase" style="font-family: 'Space Mono', monospace; font-size: 12px">Morning Light</div>
+                      <input property="morning_light_time" type="time" class="mt-1 w-full focus:outline-none" style="background: #ffffff; border: 2px solid #383838; border-radius: 2px; padding: 10px 12px; font-size: 14px;" />
+                    </div>
+                    <div>
+                      <div class="uppercase" style="font-family: 'Space Mono', monospace; font-size: 12px">Breakfast</div>
+                      <input property="breakfast_time" type="time" class="mt-1 w-full focus:outline-none" style="background: #ffffff; border: 2px solid #383838; border-radius: 2px; padding: 10px 12px; font-size: 14px;" />
+                    </div>
+                    <div>
+                      <div class="uppercase" style="font-family: 'Space Mono', monospace; font-size: 12px">Workout</div>
+                      <input property="workout_time" type="time" class="mt-1 w-full focus:outline-none" style="background: #ffffff; border: 2px solid #383838; border-radius: 2px; padding: 10px 12px; font-size: 14px;" />
+                    </div>
+                    <div>
+                      <div class="uppercase" style="font-family: 'Space Mono', monospace; font-size: 12px">Walk</div>
+                      <input property="walk_time" type="time" class="mt-1 w-full focus:outline-none" style="background: #ffffff; border: 2px solid #383838; border-radius: 2px; padding: 10px 12px; font-size: 14px;" />
+                    </div>
+                    <div>
+                      <div class="uppercase" style="font-family: 'Space Mono', monospace; font-size: 12px">Wind‑down Start</div>
+                      <input property="winddown_start" type="time" class="mt-1 w-full focus:outline-none" style="background: #ffffff; border: 2px solid #383838; border-radius: 2px; padding: 10px 12px; font-size: 14px;" />
+                    </div>
+                    <div>
+                      <div class="uppercase" style="font-family: 'Space Mono', monospace; font-size: 12px">Bedtime</div>
+                      <input property="bed_time" type="time" class="mt-1 w-full focus:outline-none" style="background: #ffffff; border: 2px solid #383838; border-radius: 2px; padding: 10px 12px; font-size: 14px;" />
+                    </div>
+                  </div>
+
+                  <div class="mt-2">
+                    <div class="uppercase" style="font-family: 'Space Mono', monospace; font-size: 12px">Notes</div>
+                    <textarea property="notes" rows="3" class="mt-1 w-full focus:outline-none"
+                      style="background: rgba(248, 248, 247, 0.7); border: 2px solid #383838; border-radius: 2px; padding: 12px; font-size: 14px;"></textarea>
+                  </div>
+
+                  <div class="mt-3 mb-5 flex items-center justify-between gap-3">
+                    <div class="text-sm" style="font-weight: 300;">Week start & month help dashboards filter</div>
+                    <div class="flex items-center gap-2">
+                      <div>
+                        <div class="uppercase" style="font-family: 'Space Mono', monospace; font-size: 10px">Week Start</div>
+                        <input property="week_start" type="date" class="mt-1 focus:outline-none"
+                          style="background: #ffffff; border: 2px solid #383838; border-radius: 2px; padding: 6px 8px; font-size: 12px;" />
+                      </div>
+                      <div>
+                        <div class="uppercase" style="font-family: 'Space Mono', monospace; font-size: 10px">Month</div>
+                        <input property="month_key" type="month" class="mt-1 focus:outline-none"
+                          style="background: #ffffff; border: 2px solid #383838; border-radius: 2px; padding: 6px 8px; font-size: 12px;" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- Weekly Dashboard (visible when logged out too) -->
+      <section class="mt-10">
+        <div class="flex items-center justify-between">
+          <div class="inline-block" style="font-family: 'Space Mono', monospace; text-transform: uppercase; font-size: 12px; background: #383838; color: #ffffff; padding: 6px 10px; border-radius: 2px;">Weekly Dashboard</div>
+          <div class="text-sm" style="font-weight: 300;">Filter: shows rows where <span class="uppercase" style="font-family: 'Space Mono', monospace;">week_start</span> equals the Week Start above</div>
+        </div>
+        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          <!-- Read-only cards driven by same collection via mv-value (do not define a new property) -->
+          <div mv-list mv-value="[entry]" mv-item-bar="none" class="contents">
+            <article mv-list-item mv-if="week_start = week_filter" class="flex flex-col"
+              style="border: 2px solid #383838; border-radius: 2px; background: #ffffff; box-shadow: -8px 8px 0 0 #383838;">
+              <div class="p-4 flex items-center justify-between" style="border-bottom: 2px solid #383838;">
+                <div style="font-size: 14px; letter-spacing: -0.02em; text-transform: uppercase; font-weight: 500;">[date]</div>
+                <div class="text-xs" style="font-weight: 300">[name]</div>
+              </div>
+              <div class="p-4 grid grid-cols-3 gap-2 md:grid-cols-6">
+                <div class="flex items-center gap-1" title="Exercise" style="font-size: 12px;"><i data-lucide="activity" style="width: 16px; height: 16px"></i><span>[if(exercise, '✔', '—')]</span></div>
+                <div class="flex items-center gap-1" title="Slept on time" style="font-size: 12px;"><i data-lucide="moon" style="width: 16px; height: 16px"></i><span>[if(slept_on_time, '✔', '—')]</span></div>
+                <div class="flex items-center gap-1" title="Ate on time" style="font-size: 12px;"><i data-lucide="utensils" style="width: 16px; height: 16px"></i><span>[if(eat_on_time, '✔', '—')]</span></div>
+                <div class="flex items-center gap-1" title="Protein" style="font-size: 12px;"><i data-lucide="check-circle-2" style="width: 16px; height: 16px"></i><span>[if(protein, '✔', '—')]</span></div>
+                <div class="flex items-center gap-1" title="Wind-down" style="font-size: 12px;"><i data-lucide="timer" style="width: 16px; height: 16px"></i><span>[if(winddown_done, '✔', '—')]</span></div>
+                <div class="flex items-center gap-1" title="Sunlight" style="font-size: 12px;"><i data-lucide="sun" style="width: 16px; height: 16px"></i><span>[if(sunlight, '✔', '—')]</span></div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- Monthly Dashboard -->
+      <section class="mt-10">
+        <div class="flex items-center justify-between">
+          <div class="inline-block" style="font-family: 'Space Mono', monospace; text-transform: uppercase; font-size: 12px; background: #383838; color: #ffffff; padding: 6px 10px; border-radius: 2px;">Monthly Dashboard</div>
+          <div class="text-sm" style="font-weight: 300;">Filter: shows rows where <span class="uppercase" style="font-family: 'Space Mono', monospace;">month_key</span> equals the Month above</div>
+        </div>
+        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          <div mv-list mv-value="[entry]" mv-item-bar="none" class="contents">
+            <article mv-list-item mv-if="month_key = month_filter" class="flex flex-col"
+              style="border: 2px solid #383838; border-radius: 2px; background: #ffffff; box-shadow: -8px 8px 0 0 #383838;">
+              <div class="p-4 flex items-center justify-between" style="border-bottom: 2px solid #383838;">
+                <div style="font-size: 14px; letter-spacing: -0.02em; text-transform: uppercase; font-weight: 500;">[date]</div>
+                <div class="text-xs" style="font-weight: 300">[name]</div>
+              </div>
+              <div class="p-4 grid grid-cols-3 gap-2 md:grid-cols-6">
+                <div class="flex items-center gap-1" title="Exercise" style="font-size: 12px;"><i data-lucide="activity" style="width: 16px; height: 16px"></i><span>[if(exercise, '✔', '—')]</span></div>
+                <div class="flex items-center gap-1" title="Slept on time" style="font-size: 12px;"><i data-lucide="moon" style="width: 16px; height: 16px"></i><span>[if(slept_on_time, '✔', '—')]</span></div>
+                <div class="flex items-center gap-1" title="Ate on time" style="font-size: 12px;"><i data-lucide="utensils" style="width: 16px; height: 16px"></i><span>[if(eat_on_time, '✔', '—')]</span></div>
+                <div class="flex items-center gap-1" title="Protein" style="font-size: 12px;"><i data-lucide="check-circle-2" style="width: 16px; height: 16px"></i><span>[if(protein, '✔', '—')]</span></div>
+                <div class="flex items-center gap-1" title="Wind-down" style="font-size: 12px;"><i data-lucide="timer" style="width: 16px; height: 16px"></i><span>[if(winddown_done, '✔', '—')]</span></div>
+                <div class="flex items-center gap-1" title="Sunlight" style="font-size: 12px;"><i data-lucide="sun" style="width: 16px; height: 16px"></i><span>[if(sunlight, '✔', '—')]</span></div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sign-in Overlay when trying to edit while logged out (optional) -->
+      <div id="signin-overlay" class="fixed inset-0 z-40 hidden"
+           style="background: rgba(244, 239, 234, 0.75); backdrop-filter: saturate(120%) blur(2px);">
+        <div class="mx-auto max-w-lg px-6" style="margin-top: 10vh">
+          <div style="border: 2px solid #383838; border-radius: 2px; background: #ffffff; box-shadow: -8px 8px 0 0 #383838;">
+            <div class="p-6 md:p-8">
+              <div class="inline-block" style="font-family: 'Space Mono', monospace; text-transform: uppercase; font-size: 14px; background: #383838; color: #ffffff; padding: 6px 10px; border-radius: 2px;">Sign in Required</div>
+              <h2 class="mt-3" style="font-size: 26px; letter-spacing: -0.02em; line-height: 1.2; text-transform: uppercase; font-weight: 500;">Please log in to edit</h2>
+              <p class="mt-2 text-sm" style="font-weight: 300">Your data saves to your Google Sheet. Enable pop‑ups and third‑party cookies for Google sign‑in.</p>
+              <div class="mt-5 flex items-center gap-3">
+                <button mv-action="login" class="inline-flex items-center gap-2 transition-transform hover:-translate-y-1 hover:translate-x-1"
+                  style="border: 2px solid #383838; border-radius: 2px; background: #6fc2ff; color: #383838; font-weight: 500; font-size: 14px; padding: 12px 14px; box-shadow: -6px 6px 0 0 #383838;">
+                  <i data-lucide="log-in" style="width: 18px; height: 18px"></i>
+                  <span class="uppercase">Login with Google</span>
+                </button>
+                <button id="overlay-close" class="inline-flex items-center gap-2"
+                  style="border: 2px solid #383838; border-radius: 2px; background: #ffffff; color: #383838; font-weight: 500; font-size: 14px; padding: 12px 14px;">
+                  <i data-lucide="x" style="width: 18px; height: 18px"></i>
+                  <span class="uppercase">Close</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <script>
+      // Lucide icons: render with 1.5 stroke width
+      function renderIcons() {
+        if (window.lucide && window.lucide.createIcons) {
+          window.lucide.createIcons({ attrs: { 'stroke-width': 1.5 } });
+        }
+      }
+
+      // Helpers
+      function todayISO() {
+        const d = new Date();
+        const off = d.getTimezoneOffset();
+        const d2 = new Date(d.getTime() - off * 60 * 1000);
+        return d2.toISOString().slice(0, 10);
+      }
+
+      function updateAuthUI() {
+        const app = document.querySelector('[mv-app]');
+        const loggedIn = app.classList.contains('mv-loggedin');
+        const pill = document.getElementById('auth-pill');
+        const btnLogin = document.getElementById('btn-login');
+        const btnLogout = document.getElementById('btn-logout');
+        const btnSave = document.getElementById('btn-save');
+        const authHelp = document.getElementById('auth-help');
+        if (pill) {
+          pill.style.display = 'flex';
+          pill.querySelector('span').textContent = loggedIn ? 'Signed in' : 'Signed out';
+        }
+        if (btnSave) btnSave.style.display = loggedIn ? 'inline-flex' : 'none';
+        if (btnLogout) btnLogout.style.display = loggedIn ? 'inline-flex' : 'none';
+        if (btnLogin) btnLogin.style.display = loggedIn ? 'none' : 'inline-flex';
+        if (authHelp) authHelp.style.display = loggedIn ? 'none' : 'block';
+        // Hide any elements that require login (e.g., add row button)
+        document.querySelectorAll('.requires-login').forEach((el) => {
+          el.style.display = loggedIn ? 'inline-flex' : 'none';
+        });
+        // Toggle editor panels visibility (only when logged in)
+        const selected = document.getElementById('selectedDate')?.value;
+        document.querySelectorAll('article[data-date]').forEach((card) => {
+          const editor = card.querySelector('.editor-panel');
+          if (!editor) return;
+          const isSelected = card.getAttribute('data-date') === selected;
+          editor.classList.toggle('hidden', !(loggedIn && isSelected));
+        });
+      }
+
+      function syncSelectedDateToNewRows() {
+        const selected = document.getElementById('selectedDate')?.value;
+        // If a new row was just added without date, set it to selected date
+        document.querySelectorAll('article[data-date]').forEach((card) => {
+          const dateInput = card.querySelector('input[property="date"]');
+          if (dateInput && !dateInput.value && selected) {
+            dateInput.value = selected;
+            // trigger input event for Mavo to pick up
+            dateInput.dispatchEvent(new Event('input', { bubbles: true }));
+            card.setAttribute('data-date', selected);
+          }
+        });
+      }
+
+      // Observe changes to app root class (login state) and entries list
+      function setupObservers() {
+        const app = document.querySelector('[mv-app]');
+        const mo = new MutationObserver(() => {
+          renderIcons();
+          updateAuthUI();
+        });
+        mo.observe(app, { attributes: true, attributeFilter: ['class'] });
+
+        const entriesContainer = document.querySelector('[mv-list][property="entry"]')?.parentElement;
+        if (entriesContainer) {
+          const mo2 = new MutationObserver(() => {
+            renderIcons();
+            syncSelectedDateToNewRows();
+            updateAuthUI();
+          });
+          mo2.observe(entriesContainer, { childList: true, subtree: true });
+        }
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        // Default selected date to today
+        const sel = document.getElementById('selectedDate');
+        if (sel && !sel.value) sel.value = todayISO();
+        sel?.addEventListener('change', () => updateAuthUI());
+
+        renderIcons();
+        setupObservers();
+        updateAuthUI();
+
+        // Close overlay
+        const overlayClose = document.getElementById('overlay-close');
+        const overlay = document.getElementById('signin-overlay');
+        overlayClose?.addEventListener('click', () => (overlay.style.display = 'none'));
+      });
+    </script>
+  </body>
+</html>
