@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Habit Tracker — 3‑Day + Weekly/Monthly</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Space+Mono:wght@400&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://get.mavo.io/mavo.css" />
+    <script src="https://get.mavo.io/mavo.js"></script>
+    <script src="https://plugins.mavo.io/mavo.github.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@latest"></script>
+  </head>
+  <body class="bg-[#F4EFEA] text-[#383838] antialiased" style="font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;">
+    <!-- App Shell / Custom Mavo Bar -->
+    <header class="max-w-[1200px] mx-auto px-6 md:px-8 pt-8 pb-6">
+      <div class="flex items-start md:items-center gap-4 md:gap-6 justify-between">
+        <!-- Brand -->
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 md:w-12 md:h-12 bg-[#383838] border-2 border-[#383838] rounded-[2px] flex items-center justify-center" aria-hidden="true">
+            <i data-lucide="check-square" class="text-[#F4EFEA]" style="width:22px; height:22px;"></i>
+          </div>
+          <div>
+            <h1 class="font-normal uppercase" style="font-family: 'Space Mono', monospace; font-size: 32px; letter-spacing: -0.02em;">HABITS</h1>
+            <div class="inline-block mt-1 px-2.5 py-1 rounded-[2px] bg-[#383838] text-white" style="font-family: 'Space Mono', monospace; font-size: 14px; text-transform: uppercase;">Daily checklist</div>
+          </div>
+        </div>
+
+        <!-- Custom Mavo toolbar (mv-bar none) -->
+        <div class="mv-bar mv-ui flex items-center gap-2 md:gap-3">
+          <div id="mvStatus" class="hidden md:flex items-center gap-2 text-sm">
+            <span>Logged in to Github as</span>
+            <a id="mvStatusLink" href="#" target="_blank" class="flex items-center gap-2 underline-offset-2 hover:underline">
+              <img id="mvAvatar" class="mv-avatar w-6 h-6 rounded-full border border-[#383838]" src="" alt="avatar" />
+              <span id="mvUser">—</span>
+            </a>
+          </div>
+          <button type="button" class="mv-edit px-3 py-2 bg-white border-2 border-[#383838] rounded-[2px] uppercase text-[12px] tracking-wide shadow-[-6px_6px_0_0_#383838] hover:-translate-x-1 hover:-translate-y-1 transition" title="Edit">Edit</button>
+          <button type="button" class="mv-save px-3 py-2 bg-[#6FC2FF] border-2 border-[#383838] rounded-[2px] uppercase text-[12px] tracking-wide shadow-[-6px_6px_0_0_#383838] hover:-translate-x-1 hover:-translate-y-1 transition" title="Save">Save</button>
+          <button type="button" class="mv-login px-3 py-2 bg-white border-2 border-[#383838] rounded-[2px] uppercase text-[12px] tracking-wide shadow-[-6px_6px_0_0_#383838] hover:-translate-x-1 hover:-translate-y-1 transition" title="Login">Login</button>
+          <button type="button" class="mv-logout px-3 py-2 bg-[#FF7169] border-2 border-[#383838] rounded-[2px] uppercase text-[12px] tracking-wide shadow-[-6px_6px_0_0_#383838] hover:-translate-x-1 hover:-translate-y-1 transition" title="Logout">Logout</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main App -->
+    <main
+      class="max-w-[1200px] mx-auto px-6 md:px-8 pb-16"
+      mv-app="habitApp"
+      mv-bar="none"
+      mv-storage="github"
+      mv-storage-options="owner: hsingh23, repo: harsh-habit-tracker, filename: habitTracker.json, branch: main"
+    >
+      <!-- App Meta / Settings -->
+      <section class="mb-6">
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="label-chip inline-flex items-center px-2.5 py-1 bg-[#383838] text-white rounded-[2px]" style="font-family:'Space Mono', monospace; text-transform:uppercase; font-size:14px;">Quick Filters</div>
+          <div class="flex items-center gap-2">
+            <button id="addTodayBtn" class="px-3 py-2 bg-white border-2 border-[#383838] rounded-[2px] uppercase text-[12px] tracking-wide shadow-[-6px_6px_0_0_#383838] hover:-translate-x-1 hover:-translate-y-1 transition" mv-action="add(entries)" title="Add a day if needed">Add Day</button>
+            <button id="sortByDateBtn" class="px-3 py-2 bg-white border-2 border-[#383838] rounded-[2px] uppercase text-[12px] tracking-wide hover:-translate-x-1 hover:-translate-y-1 transition" title="Sort newest first">Sort</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Logged-in: 3‑Day Rolling Window -->
+      <section id="threeDaySection" class="auth grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        <h2 class="sr-only">Last 3 Days</h2>
+        <div class="md:col-span-3 flex items-center justify-between">
+          <div class="inline-flex items-center px-2.5 py-1 bg-white border-2 border-[#383838] rounded-[2px]" style="box-shadow:-6px 6px 0 0 #383838; font-family:'Space Mono', monospace; text-transform:uppercase; font-size:14px;">
+            <i data-lucide="calendar-days" style="width:16px; height:16px; margin-right:6px;"></i>
+            Last 3 Days
+          </div>
+          <div class="text-sm text-[#A1A1A1]">Tap items to toggle</div>
+        </div>
+
+        <!-- All entries; JS hides all but 3 most recent when logged in -->
+        <section property="entries" mv-list class="contents">
+          <article class="bg-white border-2 border-[#383838] rounded-[2px] p-4 md:p-5" style="box-shadow:-8px 8px 0 0 #383838;">
+            <!-- Date / Title -->
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <i data-lucide="sunrise" style="width:18px; height:18px;"></i>
+                <input property="date" type="date" class="bg-[#F8F8F7]/70 border-2 border-[#383838] rounded-[2px] px-2 py-1 text-sm" />
+              </div>
+              <div class="uppercase text-xs text-[#A1A1A1] tracking-wide">Daily Checks</div>
+            </div>
+
+            <!-- Habit Toggles -->
+            <div class="mt-4 grid grid-cols-2 gap-2">
+              <button mv-action="set(exercisedMorning, !exercisedMorning)" class="flex items-center justify-between gap-2 px-3 py-2 bg-white border-2 border-[#383838] rounded-[2px] hover:-translate-x-1 hover:-translate-y-1 transition" title="Morning Exercise">
+                <span class="flex items-center gap-2"><i data-lucide="dumbbell" style="width:18px;height:18px;"></i><span class="uppercase text-xs">Morning Exercise</span></span>
+                <span class="flex items-center gap-1"><i data-lucide="check-circle-2" class="text-emerald-500" style="width:18px;height:18px;" mv-if="exercisedMorning"></i><i data-lucide="circle" style="width:18px;height:18px;" mv-if="!exercisedMorning"></i></span>
+              </button>
+              <button mv-action="set(sleptOnTime, !sleptOnTime)" class="flex items-center justify-between gap-2 px-3 py-2 bg-white border-2 border-[#383838] rounded-[2px] hover:-translate-x-1 hover:-translate-y-1 transition" title="Slept On Time">
+                <span class="flex items-center gap-2"><i data-lucide="moon" style="width:18px;height:18px;"></i><span class="uppercase text-xs">Slept On Time</span></span>
+                <span class="flex items-center gap-1"><i data-lucide="check-circle-2" class="text-emerald-500" style="width:18px;height:18px;" mv-if="sleptOnTime"></i><i data-lucide="circle" style="width:18px;height:18px;" mv-if="!sleptOnTime"></i></span>
+              </button>
+              <button mv-action="set(ateOnTime, !ateOnTime)" class="flex items-center justify-between gap-2 px-3 py-2 bg-white border-2 border-[#383838] rounded-[2px] hover:-translate-x-1 hover:-translate-y-1 transition" title="Ate On Time">
+                <span class="flex items-center gap-2"><i data-lucide="utensils" style="width:18px;height:18px;"></i><span class="uppercase text-xs">Ate On Time</span></span>
+                <span class="flex items-center gap-1"><i data-lucide="check-circle-2" class="text-emerald-500" style="width:18px;height:18px;" mv-if="ateOnTime"></i><i data-lucide="circle" style="width:18px;height:18px;" mv-if="!ateOnTime"></i></span>
+              </button>
+              <button mv-action="set(hadProtein, !hadProtein)" class="flex items-center justify-between gap-2 px-3 py-2 bg-white border-2 border-[#383838] rounded-[2px] hover:-translate-x-1 hover:-translate-y-1 transition" title="Had Protein">
+                <span class="flex items-center gap-2"><i data-lucide="egg" style="width:18px;height:18px;"></i><span class="uppercase text-xs">Had Protein</span></span>
+                <span class="flex items-center gap-1"><i data-lucide="check-circle-2" class="text-emerald-500" style="width:18px;height:18px;" mv-if="hadProtein"></i><i data-lucide="circle" style="width:18px;height:18px;" mv-if="!hadProtein"></i></span>
+              </button>
+              <button mv-action="set(windDown, !windDown)" class="flex items-center justify-between gap-2 px-3 py-2 bg-white border-2 border-[#383838] rounded-[2px] hover:-translate-x-1 hover:-translate-y-1 transition" title="Wind Down">
+                <span class="flex items-center gap-2"><i data-lucide="guitar" style="width:18px;height:18px;"></i><span class="uppercase text-xs">Wind Down</span></span>
+                <span class="flex items-center gap-1"><i data-lucide="check-circle-2" class="text-emerald-500" style="width:18px;height:18px;" mv-if="windDown"></i><i data-lucide="circle" style="width:18px;height:18px;" mv-if="!windDown"></i></span>
+              </button>
+              <button mv-action="set(sawSunlight, !sawSunlight)" class="flex items-center justify-between gap-2 px-3 py-2 bg-white border-2 border-[#383838] rounded-[2px] hover:-translate-x-1 hover:-translate-y-1 transition" title="Morning Sunlight">
+                <span class="flex items-center gap-2"><i data-lucide="sun" style="width:18px;height:18px;"></i><span class="uppercase text-xs">Saw Sunlight</span></span>
+                <span class="flex items-center gap-1"><i data-lucide="check-circle-2" class="text-emerald-500" style="width:18px;height:18px;" mv-if="sawSunlight"></i><i data-lucide="circle" style="width:18px;height:18px;" mv-if="!sawSunlight"></i></span>
+              </button>
+            </div>
+
+            <!-- Times & Notes -->
+            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+              <label class="flex items-center gap-2 text-sm">
+                <span class="uppercase text-xs text-[#A1A1A1]" style="font-family:'Space Mono', monospace;">Slept At</span>
+                <input property="sleepTime" type="time" class="bg-[#F8F8F7]/70 border-2 border-[#383838] rounded-[2px] px-2 py-1 text-sm w-[140px]" />
+              </label>
+              <label class="flex items-center gap-2 text-sm">
+                <span class="uppercase text-xs text-[#A1A1A1]" style="font-family:'Space Mono', monospace;">Ate Window</span>
+                <input property="eatWindow" type="text" placeholder="e.g. 8a–4p" class="bg-[#F8F8F7]/70 border-2 border-[#383838] rounded-[2px] px-2 py-1 text-sm w-full" />
+              </label>
+              <div class="md:col-span-2">
+                <textarea property="notes" rows="3" placeholder="Additional notes..." class="w-full bg-[#F8F8F7]/70 border-2 border-[#383838] rounded-[2px] px-3 py-2 text-sm"></textarea>
+              </div>
+            </div>
+          </article>
+        </section>
+      </section>
+
+      <!-- Logged-out: Dashboards (Week / Month) -->
+      <section id="dashboards" class="guest space-y-6">
+        <div class="flex items-center justify-between">
+          <div class="inline-flex items-center px-2.5 py-1 bg-white border-2 border-[#383838] rounded-[2px]" style="box-shadow:-6px 6px 0 0 #383838; font-family:'Space Mono', monospace; text-transform:uppercase; font-size:14px;">
+            <i data-lucide="chart-bar" style="width:16px; height:16px; margin-right:6px;"></i>
+            Overview
+          </div>
+          <div class="flex items-center gap-2" id="periodToggle">
+            <button data-period="week" class="px-3 py-1.5 bg-[#383838] text-white rounded-[2px] text-xs uppercase">Week</button>
+            <button data-period="month" class="px-3 py-1.5 bg-white border-2 border-[#383838] rounded-[2px] text-xs uppercase">Month</button>
+          </div>
+        </div>
+
+        <!-- Range controls (hidden, toggled by JS) -->
+        <div class="flex flex-wrap items-center gap-3 text-sm">
+          <label class="flex items-center gap-2">From <input id="rangeStart" type="date" class="bg-[#F8F8F7]/70 border-2 border-[#383838] rounded-[2px] px-2 py-1" /></label>
+          <label class="flex items-center gap-2">To <input id="rangeEnd" type="date" class="bg-[#F8F8F7]/70 border-2 border-[#383838] rounded-[2px] px-2 py-1" /></label>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-6 gap-3" id="kpiGrid">
+          <div class="bg-white border-2 border-[#383838] rounded-[2px] p-3 text-center" style="box-shadow:-6px 6px 0 0 #383838;">
+            <div class="text-2xl font-medium" id="kpiDays">0</div>
+            <div class="uppercase text-[11px] text-[#A1A1A1] tracking-wide">Days</div>
+          </div>
+          <div class="bg-white border-2 border-[#53DBC9] rounded-[2px] p-3 text-center" style="box-shadow:-6px 6px 0 0 #53DBC9;">
+            <div class="text-2xl font-medium" id="kpiExercise">0</div>
+            <div class="uppercase text-[11px] text-[#A1A1A1] tracking-wide">Exercise</div>
+          </div>
+          <div class="bg-white border-2 border-[#7597EE] rounded-[2px] p-3 text-center" style="box-shadow:-6px 6px 0 0 #7597EE;">
+            <div class="text-2xl font-medium" id="kpiSleep">0</div>
+            <div class="uppercase text-[11px] text-[#A1A1A1] tracking-wide">Slept On Time</div>
+          </div>
+          <div class="bg-white border-2 border-[#B3C419] rounded-[2px] p-3 text-center" style="box-shadow:-6px 6px 0 0 #B3C419;">
+            <div class="text-2xl font-medium" id="kpiEat">0</div>
+            <div class="uppercase text-[11px] text-[#A1A1A1] tracking-wide">Ate On Time</div>
+          </div>
+          <div class="bg-white border-2 border-[#E1C427] rounded-[2px] p-3 text-center" style="box-shadow:-6px 6px 0 0 #E1C427;">
+            <div class="text-2xl font-medium" id="kpiProtein">0</div>
+            <div class="uppercase text-[11px] text-[#A1A1A1] tracking-wide">Protein</div>
+          </div>
+          <div class="bg-white border-2 border-[#FF7169] rounded-[2px] p-3 text-center" style="box-shadow:-6px 6px 0 0 #FF7169;">
+            <div class="text-2xl font-medium" id="kpiWind">0</div>
+            <div class="uppercase text-[11px] text-[#A1A1A1] tracking-wide">Wind Down</div>
+          </div>
+          <div class="bg-white border-2 border-[#84A6BC] rounded-[2px] p-3 text-center col-span-2" style="box-shadow:-6px 6px 0 0 #84A6BC;">
+            <div class="text-2xl font-medium" id="kpiSun">0</div>
+            <div class="uppercase text-[11px] text-[#A1A1A1] tracking-wide">Sunlight</div>
+          </div>
+        </div>
+
+        <!-- Notes Capture (even when logged out, local editing; save requires login) -->
+        <div class="bg-white border-2 border-[#383838] rounded-[2px] p-4" style="box-shadow:-8px 8px 0 0 #383838;">
+          <div class="flex items-center gap-2 mb-2">
+            <i data-lucide="notebook-text" style="width:18px;height:18px;"></i>
+            <div class="uppercase text-xs tracking-wide" style="font-family:'Space Mono', monospace;">End Notes</div>
+          </div>
+          <textarea property="dashboardNotes" rows="4" placeholder="Weekly or Monthly reflections…" class="w-full bg-[#F8F8F7]/70 border-2 border-[#383838] rounded-[2px] px-3 py-2 text-sm"></textarea>
+        </div>
+      </section>
+    </main>
+
+    <!-- Scripts: helpers & wiring -->
+    <script>
+      // Lucide icons render helper with 1.5 stroke width
+      function renderIcons() {
+        try { lucide.createIcons({ attrs: { 'stroke-width': 1.5 } }); } catch(e) {}
+      }
+
+      // Format yyyy-mm-dd for input[type=date]
+      function ymd(d){ const z = (n)=> String(n).padStart(2,'0'); return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`; }
+      function parseDate(str){ const d = new Date(str); return isNaN(d.getTime()) ? null : d; }
+      function withinRange(dateStr, startStr, endStr){
+        const d = parseDate(dateStr), s = parseDate(startStr), e = parseDate(endStr);
+        if(!d || !s || !e) return false; const dd = d.setHours(0,0,0,0); return dd >= s.setHours(0,0,0,0) && dd <= e.setHours(0,0,0,0);
+      }
+
+      // UI state: logged in/out
+      function setLoggedInUI(isLogged){
+        const three = document.getElementById('threeDaySection');
+        const dash = document.getElementById('dashboards');
+        const status = document.getElementById('mvStatus');
+        if(isLogged){ three.classList.remove('hidden'); dash.classList.add('hidden'); status.classList.remove('hidden'); }
+        else { three.classList.add('hidden'); dash.classList.remove('hidden'); status.classList.add('hidden'); }
+      }
+
+      // Limit 3 most recent cards (assumes entries are in DOM order; we will sort by date desc on click)
+      function showOnlyTop3(){
+        const cards = Array.from(document.querySelectorAll('[property="entries"] > article'));
+        cards.forEach((el, i)=>{ el.classList.toggle('hidden', i >= 3); });
+      }
+
+      // Sort entries by date desc in DOM (client-side order only)
+      function sortEntriesDom(){
+        const list = document.querySelector('[property="entries"]');
+        if(!list) return;
+        const items = Array.from(list.children);
+        items.sort((a,b)=>{
+          const da = parseDate(a.querySelector('input[property="date"]').value || '');
+          const db = parseDate(b.querySelector('input[property="date"]').value || '');
+          return (db?db.getTime():0) - (da?da.getTime():0);
+        }).forEach(el=>list.appendChild(el));
+      }
+
+      // Dashboard stats
+      function recalcKPIs(){
+        const start = document.getElementById('rangeStart').value;
+        const end = document.getElementById('rangeEnd').value;
+        const items = Array.from(document.querySelectorAll('[property="entries"] > article'));
+        let days=0, ex=0, sl=0, eat=0, prot=0, wind=0, sun=0;
+        for(const el of items){
+          const d = el.querySelector('input[property="date"]').value;
+          if(!withinRange(d, start, end)) continue;
+          days++;
+          if(el.querySelector('[mv-if="exercisedMorning"]').offsetParent !== null) ex++;
+          if(el.querySelector('[mv-if="sleptOnTime"]').offsetParent !== null) sl++;
+          if(el.querySelector('[mv-if="ateOnTime"]').offsetParent !== null) eat++;
+          if(el.querySelector('[mv-if="hadProtein"]').offsetParent !== null) prot++;
+          if(el.querySelector('[mv-if="windDown"]').offsetParent !== null) wind++;
+          if(el.querySelector('[mv-if="sawSunlight"]').offsetParent !== null) sun++;
+        }
+        document.getElementById('kpiDays').textContent = days;
+        document.getElementById('kpiExercise').textContent = ex;
+        document.getElementById('kpiSleep').textContent = sl;
+        document.getElementById('kpiEat').textContent = eat;
+        document.getElementById('kpiProtein').textContent = prot;
+        document.getElementById('kpiWind').textContent = wind;
+        document.getElementById('kpiSun').textContent = sun;
+      }
+
+      // Period toggle helpers
+      function setPeriod(period){
+        const weekBtn = document.querySelector('#periodToggle [data-period="week"]');
+        const monthBtn = document.querySelector('#periodToggle [data-period="month"]');
+        const now = new Date();
+        if(period === 'week'){
+          const end = new Date();
+          const start = new Date(); start.setDate(now.getDate()-6);
+          document.getElementById('rangeStart').value = ymd(start);
+          document.getElementById('rangeEnd').value = ymd(end);
+          weekBtn.className = 'px-3 py-1.5 bg-[#383838] text-white rounded-[2px] text-xs uppercase';
+          monthBtn.className = 'px-3 py-1.5 bg-white border-2 border-[#383838] rounded-[2px] text-xs uppercase';
+        } else {
+          const end = new Date();
+          const start = new Date(); start.setDate(now.getDate()-29);
+          document.getElementById('rangeStart').value = ymd(start);
+          document.getElementById('rangeEnd').value = ymd(end);
+          monthBtn.className = 'px-3 py-1.5 bg-[#383838] text-white rounded-[2px] text-xs uppercase';
+          weekBtn.className = 'px-3 py-1.5 bg-white border-2 border-[#383838] rounded-[2px] text-xs uppercase';
+        }
+        recalcKPIs();
+      }
+
+      // Mavo wiring and UI init
+      document.addEventListener('DOMContentLoaded', () => {
+        renderIcons();
+
+        // Default: show dashboards (guest) until we know login state
+        setLoggedInUI(false);
+
+        // Add Today convenience: creates a new entry if missing for today
+        document.getElementById('addTodayBtn').addEventListener('click', () => {
+          const today = ymd(new Date());
+          const existing = Array.from(document.querySelectorAll('[property="entries"] input[property="date"]')).some(i => i.value === today);
+          if(!existing){
+            // Will use last added item's node; after Mavo adds, set the date
+            setTimeout(()=>{
+              const inputs = document.querySelectorAll('[property="entries"] article input[property="date"]');
+              const last = inputs[inputs.length-1];
+              if(last){ last.value = today; last.dispatchEvent(new Event('input', { bubbles:true })); }
+              sortEntriesDom(); showOnlyTop3(); renderIcons(); recalcKPIs();
+            }, 50);
+          } else {
+            sortEntriesDom(); showOnlyTop3(); renderIcons(); recalcKPIs();
+          }
+        });
+
+        document.getElementById('sortByDateBtn').addEventListener('click', () => { sortEntriesDom(); showOnlyTop3(); renderIcons(); recalcKPIs(); });
+
+        // Period toggle buttons
+        document.querySelector('#periodToggle [data-period="week"]').addEventListener('click', ()=> setPeriod('week'));
+        document.querySelector('#periodToggle [data-period="month"]').addEventListener('click', ()=> setPeriod('month'));
+
+        // Initialize period and KPIs
+        setPeriod('week');
+
+        // Re-render icons when Mavo mutates DOM
+        document.addEventListener('mv-load', () => { renderIcons(); sortEntriesDom(); showOnlyTop3(); recalcKPIs(); });
+        document.addEventListener('mv-save', () => { renderIcons(); sortEntriesDom(); showOnlyTop3(); recalcKPIs(); });
+        document.addEventListener('mv-edit', () => { renderIcons(); });
+        document.addEventListener('mv-login', (e) => {
+          setLoggedInUI(true);
+          // Update status area
+          try {
+            const user = e?.mavo?.storage?.user || e?.storage?.user || null;
+            if(user){
+              document.getElementById('mvUser').textContent = user.username || user.name || 'User';
+              const avatar = user.avatar || user.avatar_url || '';
+              if(avatar) document.getElementById('mvAvatar').src = avatar;
+              const url = user.url || (user.username ? `https://github.com/${user.username}` : '#');
+              document.getElementById('mvStatusLink').href = url;
+            }
+          } catch(err) {}
+          renderIcons(); sortEntriesDom(); showOnlyTop3(); recalcKPIs();
+        });
+        document.addEventListener('mv-logout', () => { setLoggedInUI(false); renderIcons(); sortEntriesDom(); showOnlyTop3(); recalcKPIs(); });
+      });
+    </script>
+  </body>
+</html>
+

@@ -1,14 +1,25 @@
-using style.md , let's create a habit tracker for weekly-habit-tracker-notes.md saved in new file index3.html. make mavo app with storage in google sheets, https://docs.google.com/spreadsheets/d/1Myh4hNzs3unZy1cItmJMEOe_3ax0_uMjbhokiO2uZx8/edit?gid=0#gid=0
+using @style.md and also inspired by @todo.html let's create a habit tracker for @weekly-habit-tracker-notes.md saved in new file index7.html. make sure to create and write to the file. I want the habit tracker to also encourage me and surface tips.
 
-tell me what I should put into the google sheet to start things off, currently no data. I want to track if I had exerciese, when I slept / if i slept on time, ate on time, had protein, if I did my winddown or not, if I succeeded in sleeping on time, saw the sunlight etc.
+I want this to be built like a todo app. I have all these things that I can check off easily. I've done it. I've built. I've met the condition. And I want to see a 3-day rolling window. If I'm logged in. If I'm not logged in, then I want to see multiple dashboards. One that's like a week, one that's a month. And I should be able to toggle back and forth between weeks and months. I should be able to take extra notes at then end so not only can I check off an item in my to-do list but I can also say okay I slept at this time.
 
-I want an UI that incorporates the timeline when I'm doing all of these activities, the habit stacks. And I want to see one day at a time for adding my information. and I want to see this interface for adding today's dates if I'm loved in. If I'm not loved in, then I want to see the dashboard for a week, I want to see the dashboard for a month, and the Google Sheet should be organized so that... I can easily add each day's entry as it happens and it can pull on the date and all the activities that I track and populate the dashboard for a week, a month and I should be able to basically click on it to see the week and month of year. I also should not see the edit button if I'm not logged in.
+Save the get the data in firebase, data is read public, but have to login to edit, create login flow
 
-customize the mavo ui using style.md as well, single page html css and js, no other frameworks, but other libraries are allowed if needed
+10 MB Data is UTF-8 encoded.
+use they key habitsTracker and the value should be a dense string blob that stores multiple days as year lik 2025 will be 25 and then get the day as a number, so 1st day to 365th day, so 25-1 will be first day of 2025, and 25-300 would be the 300th day. calc on the client side. Store the tracked habit checks in a condesed way so 1 year of data fits in 10 MB
+
+const firebaseConfig = {
+apiKey: "AIzaSyBMeY1TI-Hl7iZM43auDihG-7Ckx-6JBtY",
+authDomain: "cool-90147.firebaseapp.com",
+databaseURL: "https://cool-90147.firebaseio.com",
+projectId: "cool-90147",
+storageBucket: "cool-90147.firebasestorage.app",
+messagingSenderId: "64561792498",
+appId: "1:64561792498:web:d0eda52272bb90efab176b"
+};
 
 Only code in HTML/Tailwind in a single code block.
 Any CSS styles should be in the style attribute. Start with a response, then code and finish with a response.
-Don't mention about tokens, Tailwind or HTML.
+Don't mention about tokens, Tailwind or HTML.n
 Always include the html, head and body tags.
 Use lucide icons for javascript, 1.5 strokewidth.
 Unless style is specified by user, design in the style of Linear, Stripe, Vercel, Tailwind UI (IMPORTANT: don't mention names).

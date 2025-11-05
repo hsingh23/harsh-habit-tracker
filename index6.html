@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Habit Tracker - Weekly Rhythm</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <style>
+        :root {
+            --bg: #f4efea;
+            --ink: #383838;
+            --card: #ffffff;
+            --yellow: #ffde00;
+            --blue: #6fc2ff;
+            --focus: #2ba5ff;
+            --muted: #a1a1a1;
+            --radius: 2px;
+            --border-w: 2px;
+        }
+
+        body {
+            background: var(--bg);
+            font-family: 'Inter', sans-serif;
+            color: var(--ink);
+        }
+
+        .font-mono {
+            font-family: 'Space Mono', monospace;
+        }
+
+        .card-shadow {
+            box-shadow: -8px 8px 0 0 var(--ink);
+        }
+
+        .card-shadow-sm {
+            box-shadow: -6px 6px 0 0 var(--ink);
+        }
+
+        .btn-hover:hover {
+            transform: translate(7px, -7px);
+        }
+
+        .btn-hover:active {
+            transform: none;
+        }
+
+        .habit-checkbox {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border: var(--border-w) solid var(--ink);
+            border-radius: var(--radius);
+            cursor: pointer;
+            position: relative;
+            transition: all 0.12s ease-in-out;
+        }
+
+        .habit-checkbox:checked {
+            background: var(--blue);
+        }
+
+        .habit-checkbox:checked::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 5px;
+            width: 6px;
+            height: 10px;
+            border: solid var(--ink);
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+
+        .tip-card {
+            background: linear-gradient(135deg, var(--yellow) 0%, #fff 100%);
+            border: var(--border-w) solid var(--ink);
+        }
+
+        .streak-badge {
+            background: var(--yellow);
+            color: var(--ink);
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: var(--radius);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+
+        .auth-input {
+            background: rgba(248, 248, 247, 0.7);
+            border: var(--border-w) solid var(--ink);
+            border-radius: var(--radius);
+            transition: border-color 0.12s ease-in-out;
+        }
+
+        .auth-input:focus {
+            outline: none;
+            border-color: var(--focus);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Auth Modal -->
+    <div id="authModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white border-2 border-ink card-shadow rounded-md p-6 max-w-md w-full">
+            <h2 class="font-mono text-2xl uppercase mb-6">Sign In</h2>
+            <form id="authForm" class="space-y-4">
+                <input type="email" id="email" placeholder="Email" required
+                       class="auth-input w-full p-3 font-sans text-base">
+                <input type="password" id="password" placeholder="Password" required
+                       class="auth-input w-full p-3 font-sans text-base">
+                <button type="submit"
+                        class="w-full bg-blue border-2 border-ink text-ink font-sans text-base uppercase py-3 px-4 rounded-sm transition-transform btn-hover card-shadow-sm">
+                    Sign In
+                </button>
+            </form>
+            <div class="mt-4 text-center">
+                <button onclick="showSignUp()" class="text-blue hover:underline">Create Account</button>
+            </div>
+            <div id="authError" class="mt-4 text-red-600 text-sm hidden"></div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="max-w-6xl mx-auto px-6 py-8">
+        <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-ink border-2 border-ink rounded-sm flex items-center justify-center">
+                    <i data-lucide="sun" class="text-bg w-6 h-6"></i>
+                </div>
+                <h1 class="font-mono text-4xl md:text-5xl uppercase tracking-tight">Habit Tracker</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <div id="userInfo" class="hidden">
+                    <span class="text-sm text-muted mr-2" id="userEmail"></span>
+                    <button onclick="signOut()" class="text-sm text-blue hover:underline">Sign Out</button>
+                </div>
+                <button id="signInBtn" onclick="showAuthModal()"
+                        class="bg-ink text-white px-4 py-2 border-2 border-ink rounded-sm font-sans text-sm uppercase btn-hover card-shadow-sm">
+                    Sign In
+                </button>
+            </div>
+        </div>
+
+        </header>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto px-6 pb-12">
+        <!-- Stats Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white border-2 border-ink card-shadow rounded-sm p-4 text-center">
+                <div class="text-3xl font-bold mb-1" id="todayScore">0%</div>
+                <div class="text-xs uppercase tracking-wide text-muted">Today</div>
+            </div>
+            <div class="bg-white border-2 border-blue card-shadow rounded-sm p-4 text-center">
+                <div class="text-3xl font-bold mb-1" id="weekStreak">0</div>
+                <div class="text-xs uppercase tracking-wide text-muted">Week Streak</div>
+            </div>
+            <div class="bg-white border-2 border-yellow card-shadow rounded-sm p-4 text-center">
+                <div class="text-3xl font-bold mb-1" id="monthlyAvg">0%</div>
+                <div class="text-xs uppercase tracking-wide text-muted">Monthly Avg</div>
+            </div>
+            <div class="bg-white border-2 border-teal card-shadow rounded-sm p-4 text-center">
+                <div class="text-3xl font-bold mb-1" id="totalDays">0</div>
+                <div class="text-xs uppercase tracking-wide text-muted">Total Days</div>
+            </div>
+        </div>
+
+        <!-- Tip Card -->
+        <div class="tip-card card-shadow rounded-sm p-6 mb-8">
+            <div class="flex items-start gap-3">
+                <i data-lucide="lightbulb" class="text-ink w-5 h-5 flex-shrink-0 mt-1"></i>
+                <div>
+                    <h3 class="font-mono text-lg uppercase mb-2">Daily Tip</h3>
+                    <p id="dailyTip" class="text-sm leading-relaxed"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3-Day Habit Tracker -->
+        <div class="bg-white border-2 border-ink card-shadow rounded-sm p-6 mb-8">
+            <h3 class="font-mono text-xl uppercase mb-4">Recent Progress</h3>
+            <div id="recentHabits" class="space-y-6">
+                <!-- Recent habits will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Daily Notes -->
+        <div class="bg-white border-2 border-ink card-shadow rounded-sm p-6 mb-8">
+            <h3 class="font-mono text-xl uppercase mb-4">Daily Notes</h3>
+            <textarea id="dailyNotes"
+                      placeholder="How did you feel today? Sleep quality, energy levels, any insights..."
+                      class="w-full h-24 auth-input p-3 font-sans text-sm resize-none"
+                      oninput="autoSave()"></textarea>
+            <button onclick="saveNotes()"
+                    class="mt-3 bg-blue border-2 border-ink text-ink font-sans text-sm uppercase py-2 px-4 rounded-sm transition-transform btn-hover card-shadow-sm">
+                Save Notes
+            </button>
+        </div>
+
+        <!-- Analytics Dashboard -->
+        <div id="analyticsSection" class="space-y-8">
+            <!-- Weekly Analytics -->
+            <div class="bg-white border-2 border-ink card-shadow rounded-sm p-6">
+                <h3 class="font-mono text-xl uppercase mb-4">Weekly Analytics</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-blue" id="weekBestDay">-</div>
+                        <div class="text-xs text-muted uppercase">Best Day</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-yellow" id="weekWorstDay">-</div>
+                        <div class="text-xs text-muted uppercase">Worst Day</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-teal" id="weekTotalCompleted">0</div>
+                        <div class="text-xs text-muted uppercase">Total Completed</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-ink" id="weekConsistency">0%</div>
+                        <div class="text-xs text-muted uppercase">Consistency</div>
+                    </div>
+                </div>
+
+                <!-- Habit Performance Chart -->
+                <div class="mb-4">
+                    <h4 class="font-mono text-sm uppercase mb-3">Habit Performance</h4>
+                    <div id="weeklyHabitBars" class="space-y-2">
+                        <!-- Habit bars will be generated here -->
+                    </div>
+                </div>
+
+                <!-- Weekly Progress Visual -->
+                <div>
+                    <h4 class="font-mono text-sm uppercase mb-3">Daily Progress</h4>
+                    <div id="weeklyProgressBars" class="grid grid-cols-7 gap-1">
+                        <!-- Daily progress bars will be generated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monthly Analytics -->
+            <div class="bg-white border-2 border-ink card-shadow rounded-sm p-6">
+                <h3 class="font-mono text-xl uppercase mb-4">Monthly Analytics</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-blue" id="monthAvgScore">0%</div>
+                        <div class="text-xs text-muted uppercase">Monthly Avg</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-yellow" id="monthPerfectDays">0</div>
+                        <div class="text-xs text-muted uppercase">Perfect Days</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-teal" id="monthBestStreak">0</div>
+                        <div class="text-xs text-muted uppercase">Best Streak</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-ink" id="monthTotalHabits">0</div>
+                        <div class="text-xs text-muted uppercase">Total Habits</div>
+                    </div>
+                </div>
+
+                <!-- Habit Completion Rates -->
+                <div class="mb-4">
+                    <h4 class="font-mono text-sm uppercase mb-3">Habit Completion Rates</h4>
+                    <div id="monthlyHabitRates" class="space-y-2">
+                        <!-- Habit completion rates will be generated here -->
+                    </div>
+                </div>
+
+                <!-- Monthly Calendar Heatmap -->
+                <div>
+                    <h4 class="font-mono text-sm uppercase mb-3">Monthly Heatmap</h4>
+                    <div id="monthlyHeatmap" class="grid grid-cols-7 gap-1">
+                        <!-- Calendar heatmap will be generated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBMeY1TI-Hl7iZM43auDihG-7Ckx-6JBtY",
+            authDomain: "cool-90147.firebaseapp.com",
+            databaseURL: "https://cool-90147.firebaseio.com",
+            projectId: "cool-90147",
+            storageBucket: "cool-90147.firebasestorage.app",
+            messagingSenderId: "64561792498",
+            appId: "1:64561792498:web:d0eda52272bb90efab176b"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        // App State
+        let currentUser = null;
+        let habitsData = {};
+        let currentDayKey = '';
+        let saveTimeout = null;
+        let notificationQueue = [];
+        let notificationTimeout = null;
+
+        // Habits Configuration
+        const habitsConfig = [
+            { id: 'morningLight', name: 'Morning Light Exposure', time: '5-7 AM', icon: 'sun', category: 'morning' },
+            { id: 'exercise', name: 'Exercise/Gym', time: '6-7 AM', icon: 'dumbbell', category: 'morning' },
+            { id: 'breakfast', name: 'Breakfast', time: '7-8 AM', icon: 'coffee', category: 'morning' },
+            { id: 'deepWork', name: 'Deep Work Block', time: '8 AM-12 PM', icon: 'brain', category: 'work' },
+            { id: 'lunch', name: 'Lunch', time: '12 PM', icon: 'utensils', category: 'work' },
+            { id: 'afternoonWalk', name: 'Afternoon Walk', time: '3 PM', icon: 'footprints', category: 'work' },
+            { id: 'endFast', name: 'End Fasting Window', time: '4 PM', icon: 'clock', category: 'evening' },
+            { id: 'creativeWork', name: 'Creative/Project Time', time: '5-7 PM', icon: 'palette', category: 'evening' },
+            { id: 'guitar', name: 'Guitar Practice', time: '8-8:30 PM', icon: 'music', category: 'evening' },
+            { id: 'stretching', name: 'Stretching & Breathing', time: '8:30-8:45 PM', icon: 'heart', category: 'evening' },
+            { id: 'voiceJournal', name: 'Voice Journal', time: '8:45-9 PM', icon: 'mic', category: 'evening' },
+            { id: 'bedtime', name: 'Bedtime Routine', time: '9 PM', icon: 'moon', category: 'evening' }
+        ];
+
+        // Daily Tips
+        const dailyTips = [
+            "Consistency beats intensity. Small daily actions compound into remarkable results.",
+            "Morning light exposure sets your circadian rhythm for the entire day.",
+            "Exercise before 7 AM maximizes hormone benefits and energy throughout the day.",
+            "Your eating window should align with daylight hours for optimal metabolic health.",
+            "Creative work in the evening allows your logical brain to rest while your intuition flourishes.",
+            "Guitar practice isn't just about music—it's a meditation that rewires your neural pathways.",
+            "Voice journaling releases mental load and improves sleep quality.",
+            "The 4s inhale, 6-8s exhale breathing pattern activates your parasympathetic nervous system.",
+            "Weekend late nights are fine if you prioritize recovery the next day.",
+            "Environment design is more powerful than willpower. Set up your space for success.",
+            "Identity-based habits last longer than goal-based habits. You're becoming someone who lives rhythmically.",
+            "Sleep is not a luxury—it's the foundation of all performance and health metrics."
+        ];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            lucide.createIcons();
+            initAuth();
+            loadHabits();
+            updateDailyTip();
+            setView('3day');
+        });
+
+        // Authentication
+        function initAuth() {
+            auth.onAuthStateChanged(user => {
+                currentUser = user;
+                updateAuthUI();
+                loadHabits();
+            });
+        }
+
+        function showAuthModal() {
+            document.getElementById('authModal').classList.remove('hidden');
+        }
+
+        function hideAuthModal() {
+            document.getElementById('authModal').classList.add('hidden');
+        }
+
+        function showSignUp() {
+            // For simplicity, using the same form for sign up
+            // In production, you'd have separate UI
+            alert('Sign up functionality would be implemented here');
+        }
+
+        document.getElementById('authForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+                hideAuthModal();
+                document.getElementById('authError').classList.add('hidden');
+            } catch (error) {
+                document.getElementById('authError').textContent = error.message;
+                document.getElementById('authError').classList.remove('hidden');
+            }
+        });
+
+        function signOut() {
+            auth.signOut();
+        }
+
+        function updateAuthUI() {
+            const signInBtn = document.getElementById('signInBtn');
+            const userInfo = document.getElementById('userInfo');
+            const userEmail = document.getElementById('userEmail');
+
+            if (currentUser) {
+                signInBtn.classList.add('hidden');
+                userInfo.classList.remove('hidden');
+                userEmail.textContent = currentUser.email;
+                // Always in edit mode when logged in
+                isEditMode = true;
+            } else {
+                signInBtn.classList.remove('hidden');
+                userInfo.classList.add('hidden');
+                // Edit mode for public users on last 3 days
+                isEditMode = true;
+            }
+
+            // Render everything since auth state changed
+            renderAllViews();
+        }
+
+        // Main render function - displays everything at once
+        function renderAllViews() {
+            renderRecentHabits();
+            renderWeeklyAnalytics();
+            renderMonthlyAnalytics();
+            updateStats();
+        }
+
+        // Date Utilities
+        function getDayKey(date = new Date()) {
+            const year = date.getFullYear().toString().slice(-2);
+            const dayOfYear = Math.floor((date - new Date(date.getFullYear(), 0, 0)) / 86400000);
+            return `${year}-${dayOfYear}`;
+        }
+
+        function getDateFromKey(key) {
+            const [year, day] = key.split('-').map(Number);
+            const fullYear = 2000 + year;
+            return new Date(fullYear, 0, day);
+        }
+
+        function getDateString(date) {
+            return date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+        }
+
+        // Data Management
+        async function loadHabits() {
+            currentDayKey = getDayKey();
+
+            if (currentUser) {
+                // Logged in user - fetch their data
+                const snapshot = await database.ref('habitsTracker').child(currentUser.uid).once('value');
+                habitsData = snapshot.val() || {};
+            } else {
+                // Public user - use localStorage
+                const stored = localStorage.getItem('habitsTracker');
+                habitsData = stored ? JSON.parse(stored) : {};
+            }
+
+            // Ensure today's data exists
+            if (!habitsData[currentDayKey]) {
+                habitsData[currentDayKey] = {
+                    habits: {},
+                    notes: '',
+                    completed: 0,
+                    total: habitsConfig.length
+                };
+            }
+
+            renderAllViews();
+        }
+
+        // Auto-save with debouncing
+        function autoSave() {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(async () => {
+                await saveHabits();
+                queueNotification('Saved', 'check', 'teal');
+            }, 1000);
+        }
+
+        function queueNotification(message, icon, color) {
+            // Add notification to queue
+            notificationQueue.push({ message, icon, color, id: Date.now() + Math.random() });
+
+            // Clear existing timeout
+            clearTimeout(notificationTimeout);
+
+            // Set timeout to process queue after 3 seconds of no new notifications
+            notificationTimeout = setTimeout(() => {
+                processNotificationQueue();
+            }, 3000);
+        }
+
+        function processNotificationQueue() {
+            if (notificationQueue.length === 0) return;
+
+            // Clear existing notifications
+            document.querySelectorAll('.notification-item').forEach(n => n.remove());
+
+            // Display stacked notifications
+            const maxVisible = 4;
+            const visibleNotifications = notificationQueue.slice(-maxVisible);
+
+            visibleNotifications.forEach((notification, index) => {
+                const notificationEl = document.createElement('div');
+                notificationEl.className = `notification-item fixed transition-all duration-300 bg-${notification.color} border-2 border-ink card-shadow rounded-sm px-4 py-2 z-50 text-sm font-medium`;
+                notificationEl.style.cssText = `
+                    top: ${16 + (index * 60)}px;
+                    right: 16px;
+                    opacity: 0;
+                    transform: translateX(100%);
+                `;
+
+                notificationEl.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="${notification.icon}" class="w-4 h-4"></i>
+                        <span>${notification.message}</span>
+                    </div>
+                `;
+
+                document.body.appendChild(notificationEl);
+                lucide.createIcons();
+
+                // Animate in
+                setTimeout(() => {
+                    notificationEl.style.opacity = '1';
+                    notificationEl.style.transform = 'translateX(0)';
+                }, 50 + (index * 100));
+            });
+
+            // Clear queue after displaying
+            notificationQueue = [];
+
+            // Remove notifications after 4 seconds
+            setTimeout(() => {
+                document.querySelectorAll('.notification-item').forEach((n, index) => {
+                    setTimeout(() => {
+                        n.style.opacity = '0';
+                        n.style.transform = 'translateX(100%)';
+                        setTimeout(() => {
+                            if (n.parentNode) {
+                                n.parentNode.removeChild(n);
+                            }
+                        }, 300);
+                    }, index * 100);
+                });
+            }, 4000);
+        }
+
+        function showSaveIndicator() {
+            queueNotification('Saved', 'check', 'teal');
+        }
+
+        async function saveHabits() {
+            if (currentUser) {
+                await database.ref('habitsTracker').child(currentUser.uid).set(habitsData);
+            } else {
+                localStorage.setItem('habitsTracker', JSON.stringify(habitsData));
+            }
+        }
+
+        async function saveNotes() {
+            const notes = document.getElementById('dailyNotes').value;
+            habitsData[currentDayKey].notes = notes;
+            autoSave(); // Use auto-save instead of immediate save
+        }
+
+        
+        function getDateRange() {
+            const today = new Date();
+            const dates = [];
+
+            if (currentView === '3day') {
+                // 3-day rolling window - today first, then descending
+                for (let i = 0; i < 3; i++) {
+                    const date = new Date(today);
+                    date.setDate(date.getDate() - i);
+                    const dayKey = getDayKey(date);
+                    dates.push({
+                        key: dayKey,
+                        label: getDateString(date),
+                        isToday: dayKey === currentDayKey,
+                        isEditable: i < 3 // Can edit last 3 days
+                    });
+                }
+            } else if (currentView === 'week') {
+                // Current week - today first, then descending through available days
+                const weekDates = [];
+                for (let i = 0; i < 7; i++) {
+                    const date = new Date(today);
+                    date.setDate(today.getDate() - i);
+                    const dayKey = getDayKey(date);
+                    const isEditable = i < 3; // Last 3 days are editable
+                    weekDates.push({
+                        key: dayKey,
+                        label: getDateString(date),
+                        isToday: dayKey === currentDayKey,
+                        isEditable: isEditable,
+                        sortDate: new Date(date)
+                    });
+                }
+                dates = weekDates.sort((a, b) => b.sortDate - a.sortDate);
+            } else if (currentView === 'month') {
+                // Current month - today first, then descending through available days
+                const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                const monthDates = [];
+
+                for (let date = new Date(startOfMonth); date <= endOfMonth; date.setDate(date.getDate() + 1)) {
+                    const dayKey = getDayKey(new Date(date));
+                    const dayData = habitsData[dayKey];
+                    // Only include days that have data or are in the recent past
+                    if (dayData || date >= new Date(today.getTime() - (7 * 24 * 60 * 60 * 1000))) {
+                        const isEditable = date >= new Date(today.getTime() - (2 * 24 * 60 * 60 * 1000)); // Last 3 days are editable
+                        monthDates.push({
+                            key: dayKey,
+                            label: getDateString(new Date(date)),
+                            isToday: dayKey === currentDayKey,
+                            isEditable: isEditable,
+                            sortDate: new Date(date)
+                        });
+                    }
+                }
+                dates = monthDates.sort((a, b) => b.sortDate - a.sortDate);
+            }
+
+            return dates;
+        }
+
+        // Render recent 3 days habits
+        function renderRecentHabits() {
+            const container = document.getElementById('recentHabits');
+            const today = new Date();
+            const dates = [];
+
+            // Get last 3 days
+            for (let i = 0; i < 3; i++) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                const dayKey = getDayKey(date);
+                dates.push({
+                    key: dayKey,
+                    label: getDateString(date),
+                    isToday: dayKey === currentDayKey,
+                    isEditable: i < 3 // All last 3 days are editable
+                });
+            }
+
+            container.innerHTML = dates.map(dateInfo => {
+                const dayKey = dateInfo.key;
+                const dayData = habitsData[dayKey] || {
+                    habits: {},
+                    notes: '',
+                    completed: 0,
+                    total: habitsConfig.length
+                };
+
+                const isToday = dayKey === currentDayKey;
+                const completionRate = Math.round((dayData.completed / dayData.total) * 100);
+
+                return `
+                    <div class="bg-white border-2 ${isToday ? 'border-blue' : 'border-ink/50'} rounded-sm p-4">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h4 class="font-mono text-lg uppercase">${dateInfo.label}</h4>
+                                ${dateInfo.isToday ? '<span class="text-sm text-blue">Today</span>' : ''}
+                            </div>
+                            <div class="text-right">
+                                <div class="text-2xl font-bold">${completionRate}%</div>
+                                <div class="text-xs text-muted">Complete</div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            ${habitsConfig.map(habit => {
+                                const isChecked = dayData.habits[habit.id] || false;
+                                const canEdit = dateInfo.isEditable;
+
+                                return `
+                                    <div class="flex items-center gap-3 p-3 border ${isChecked ? 'border-teal bg-teal/10' : 'border-ink/20'} rounded-sm">
+                                        <i data-lucide="${habit.icon}" class="w-4 h-4 ${isChecked ? 'text-teal' : 'text-ink/60'} flex-shrink-0"></i>
+                                        <div class="flex-1 min-w-0">
+                                            <div class="text-sm font-medium">${habit.name}</div>
+                                            <div class="text-xs text-muted">${habit.time}</div>
+                                        </div>
+                                        ${canEdit ? `
+                                            <input type="checkbox"
+                                                   class="habit-checkbox"
+                                                   ${isChecked ? 'checked' : ''}
+                                                   onchange="toggleHabit('${dayKey}', '${habit.id}')">
+                                        ` : `
+                                            <div class="w-5 h-5 ${isChecked ? 'bg-teal' : 'bg-ink/20'} border-2 border-ink rounded-sm flex items-center justify-center">
+                                                ${isChecked ? '<i data-lucide="check" class="w-3 h-3 text-ink"></i>' : ''}
+                                            </div>
+                                        `}
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+
+                        ${isToday && dayData.notes ? `
+                            <div class="mt-4 pt-4 border-t-2 border-ink/20">
+                                <div class="text-sm text-muted mb-2">Today's Notes:</div>
+                                <div class="text-sm">${dayData.notes}</div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+
+            // Reinitialize icons
+            lucide.createIcons();
+        }
+
+        // Habit Toggle
+        async function toggleHabit(dayKey, habitId) {
+            // Allow editing for logged in users or public users on last 3 days
+            const today = new Date();
+            const targetDate = getDateFromKey(dayKey);
+            const diffDays = Math.floor((today - targetDate) / (24 * 60 * 60 * 1000));
+
+            if (diffDays > 2 || diffDays < 0) return; // Only allow last 3 days
+
+            const dayData = habitsData[dayKey];
+            if (!dayData) {
+                habitsData[dayKey] = {
+                    habits: {},
+                    notes: '',
+                    completed: 0,
+                    total: habitsConfig.length
+                };
+            }
+
+            const dayDataRef = habitsData[dayKey];
+            const wasChecked = dayDataRef.habits[habitId] || false;
+            dayDataRef.habits[habitId] = !wasChecked;
+
+            // Update completion count
+            dayDataRef.completed = Object.values(dayDataRef.habits).filter(Boolean).length;
+
+            // Auto-save instead of immediate save
+            autoSave();
+
+            // Re-render everything to update percentages
+            renderAllViews();
+
+            // Show encouragement
+            if (!wasChecked) {
+                const encouragements = [
+                    "Great job! Every small win builds momentum!",
+                    "You're crushing it! Keep this energy going!",
+                    "Fantastic! Your future self thanks you!",
+                    "Excellent! You're building powerful habits!",
+                    "Way to go! Consistency is everything!",
+                    "Amazing! You're one step closer to your goals!"
+                ];
+
+                const randomEncouragement = encouragements[Math.floor(Math.random() * encouragements.length)];
+                queueNotification(randomEncouragement, 'sparkles', 'yellow');
+            }
+        }
+
+        // Stats Update
+        function updateStats() {
+            const todayData = habitsData[currentDayKey] || { completed: 0, total: habitsConfig.length };
+            const todayScore = Math.round((todayData.completed / todayData.total) * 100);
+
+            document.getElementById('todayScore').textContent = todayScore + '%';
+
+            // Calculate weekly streak
+            let weekStreak = 0;
+            for (let i = 0; i < 7; i++) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                const dayKey = getDayKey(date);
+                const dayData = habitsData[dayKey];
+                if (dayData && dayData.completed === dayData.total) {
+                    weekStreak++;
+                } else {
+                    break;
+                }
+            }
+            document.getElementById('weekStreak').textContent = weekStreak;
+
+            // Calculate monthly average
+            const currentMonth = new Date().getMonth();
+            let monthlyTotal = 0;
+            let monthlyCount = 0;
+
+            Object.entries(habitsData).forEach(([key, data]) => {
+                const date = getDateFromKey(key);
+                if (date.getMonth() === currentMonth) {
+                    monthlyTotal += (data.completed / data.total) * 100;
+                    monthlyCount++;
+                }
+            });
+
+            const monthlyAvg = monthlyCount > 0 ? Math.round(monthlyTotal / monthlyCount) : 0;
+            document.getElementById('monthlyAvg').textContent = monthlyAvg + '%';
+
+            // Total days tracked
+            document.getElementById('totalDays').textContent = Object.keys(habitsData).length;
+        }
+
+        // Daily Tip
+        function updateDailyTip() {
+            const tipIndex = new Date().getDate() % dailyTips.length;
+            document.getElementById('dailyTip').textContent = dailyTips[tipIndex];
+        }
+
+        // Legacy function - now handled by queueNotification
+        function showEncouragement() {
+            // This function is now replaced by queueNotification in toggleHabit
+        }
+
+        // Mode Toggle Functions
+        function toggleMode() {
+            isEditMode = !isEditMode;
+            updateModeUI();
+            renderHabits();
+        }
+
+        function updateModeUI() {
+            const desktopKnob = document.getElementById('modeSwitchKnob');
+            const mobileKnob = document.getElementById('mobileModeSwitchKnob');
+            const modeSwitch = document.getElementById('modeSwitch');
+
+            if (isEditMode) {
+                // Edit mode - move knob to right, change background to blue
+                desktopKnob.style.transform = 'translateX(28px)';
+                mobileKnob.style.transform = 'translateX(28px)';
+                modeSwitch.classList.remove('bg-ink');
+                modeSwitch.classList.add('bg-blue');
+            } else {
+                // Dashboard mode - move knob to left, change background to ink
+                desktopKnob.style.transform = 'translateX(0)';
+                mobileKnob.style.transform = 'translateX(0)';
+                modeSwitch.classList.remove('bg-blue');
+                modeSwitch.classList.add('bg-ink');
+            }
+
+            // Update notes section
+            const notesTextarea = document.getElementById('dailyNotes');
+            const notesButton = document.querySelector('button[onclick="saveNotes()"]');
+
+            if (notesTextarea) {
+                notesTextarea.disabled = !isEditMode;
+                if (notesButton) {
+                    notesButton.disabled = !isEditMode;
+                }
+            }
+        }
+
+        // Mobile Menu Toggle
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            menu.classList.toggle('hidden');
+        }
+
+        // Analytics Functions
+        function renderWeeklyAnalytics() {
+            const today = new Date();
+            const startOfWeek = new Date(today);
+            startOfWeek.setDate(today.getDate() - today.getDay());
+
+            const weeklyData = [];
+            let totalCompleted = 0;
+            let totalPossible = 0;
+            let bestDay = { score: 0, name: '' };
+            let worstDay = { score: 100, name: '' };
+
+            // Gather weekly data
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(startOfWeek);
+                date.setDate(startOfWeek.getDate() + i);
+                const dayKey = getDayKey(date);
+                const dayData = habitsData[dayKey];
+                const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+
+                const score = dayData ? Math.round((dayData.completed / dayData.total) * 100) : 0;
+                totalCompleted += dayData ? dayData.completed : 0;
+                totalPossible += habitsConfig.length;
+
+                weeklyData.push({ dayName, score, date });
+
+                if (score > bestDay.score) {
+                    bestDay = { score, name: dayName };
+                }
+                if (score < worstDay.score && (dayData || score > 0)) {
+                    worstDay = { score, name: dayName };
+                }
+            }
+
+            const consistency = totalPossible > 0 ? Math.round((totalCompleted / totalPossible) * 100) : 0;
+
+            // Update stats
+            document.getElementById('weekBestDay').textContent = bestDay.score > 0 ? bestDay.name : '-';
+            document.getElementById('weekWorstDay').textContent = worstDay.score < 100 ? worstDay.name : '-';
+            document.getElementById('weekTotalCompleted').textContent = totalCompleted;
+            document.getElementById('weekConsistency').textContent = consistency + '%';
+
+            // Render habit performance bars
+            renderWeeklyHabitBars(weeklyData);
+
+            // Render daily progress bars
+            renderWeeklyProgressBars(weeklyData);
+        }
+
+        function renderWeeklyHabitBars(weeklyData) {
+            const container = document.getElementById('weeklyHabitBars');
+
+            habitsConfig.forEach(habit => {
+                let completedCount = 0;
+                weeklyData.forEach(day => {
+                    const dayKey = getDayKey(day.date);
+                    const dayData = habitsData[dayKey];
+                    if (dayData && dayData.habits[habit.id]) {
+                        completedCount++;
+                    }
+                });
+
+                const completionRate = Math.round((completedCount / 7) * 100);
+
+                const habitBar = document.createElement('div');
+                habitBar.className = 'flex items-center gap-3';
+                habitBar.innerHTML = `
+                    <div class="w-24 text-sm truncate">${habit.name}</div>
+                    <div class="flex-1 bg-ink/20 h-4 rounded-sm relative overflow-hidden">
+                        <div class="absolute top-0 left-0 h-full ${completionRate >= 80 ? 'bg-teal' : completionRate >= 50 ? 'bg-yellow' : 'bg-red/60'} transition-all duration-300"
+                             style="width: ${completionRate}%"></div>
+                    </div>
+                    <div class="w-10 text-sm text-right">${completionRate}%</div>
+                `;
+                container.appendChild(habitBar);
+            });
+        }
+
+        function renderWeeklyProgressBars(weeklyData) {
+            const container = document.getElementById('weeklyProgressBars');
+            container.innerHTML = '';
+
+            weeklyData.forEach(day => {
+                const progressDay = document.createElement('div');
+                progressDay.className = 'bg-white border-2 border-ink/30 rounded-sm p-3';
+                progressDay.innerHTML = `
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="text-sm font-mono font-medium">${day.dayName}</div>
+                        <div class="text-lg font-bold ${day.score >= 80 ? 'text-teal' : day.score >= 50 ? 'text-yellow' : 'text-red/60'}">${day.score}%</div>
+                    </div>
+                    <div class="w-full h-4 bg-ink/10 rounded-sm relative overflow-hidden">
+                        <div class="absolute top-0 left-0 h-full ${day.score >= 80 ? 'bg-teal' : day.score >= 50 ? 'bg-yellow' : 'bg-red/60'} transition-all duration-500"
+                             style="width: ${day.score}%"></div>
+                    </div>
+                    <div class="mt-2 text-xs text-muted">${day.score === 100 ? 'Perfect! 🎉' : day.score >= 80 ? 'Great progress!' : day.score >= 50 ? 'Keep going!' : 'Room to improve'}</div>
+                `;
+                container.appendChild(progressDay);
+            });
+        }
+
+        function renderMonthlyAnalytics() {
+            const today = new Date();
+            const currentMonth = today.getMonth();
+            const currentYear = today.getFullYear();
+
+            let monthlyTotal = 0;
+            let monthlyCount = 0;
+            let perfectDays = 0;
+            let bestStreak = 0;
+            let currentStreak = 0;
+            let totalHabitsCompleted = 0;
+
+            // Calculate monthly stats
+            Object.entries(habitsData).forEach(([key, data]) => {
+                const date = getDateFromKey(key);
+                if (date.getMonth() === currentMonth && date.getFullYear() === currentYear) {
+                    const score = Math.round((data.completed / data.total) * 100);
+                    monthlyTotal += score;
+                    monthlyCount++;
+                    totalHabitsCompleted += data.completed;
+
+                    if (data.completed === data.total) {
+                        perfectDays++;
+                    }
+
+                    // Calculate streaks
+                    if (data.completed > 0) {
+                        currentStreak++;
+                        if (currentStreak > bestStreak) {
+                            bestStreak = currentStreak;
+                        }
+                    } else {
+                        currentStreak = 0;
+                    }
+                }
+            });
+
+            const avgScore = monthlyCount > 0 ? Math.round(monthlyTotal / monthlyCount) : 0;
+
+            // Update monthly stats
+            document.getElementById('monthAvgScore').textContent = avgScore + '%';
+            document.getElementById('monthPerfectDays').textContent = perfectDays;
+            document.getElementById('monthBestStreak').textContent = bestStreak;
+            document.getElementById('monthTotalHabits').textContent = totalHabitsCompleted;
+
+            // Render habit completion rates
+            renderMonthlyHabitRates(currentMonth, currentYear);
+
+            // Render monthly heatmap
+            renderMonthlyHeatmap(currentMonth, currentYear);
+        }
+
+        function renderMonthlyHabitRates(month, year) {
+            const container = document.getElementById('monthlyHabitRates');
+            container.innerHTML = '';
+
+            habitsConfig.forEach(habit => {
+                let completedCount = 0;
+                let totalDays = 0;
+
+                Object.entries(habitsData).forEach(([key, data]) => {
+                    const date = getDateFromKey(key);
+                    if (date.getMonth() === month && date.getFullYear() === year) {
+                        totalDays++;
+                        if (data.habits[habit.id]) {
+                            completedCount++;
+                        }
+                    }
+                });
+
+                const completionRate = totalDays > 0 ? Math.round((completedCount / totalDays) * 100) : 0;
+
+                const habitRate = document.createElement('div');
+                habitRate.className = 'flex items-center gap-3';
+                habitRate.innerHTML = `
+                    <div class="w-32 text-sm truncate">${habit.name}</div>
+                    <div class="flex-1 bg-ink/20 h-4 rounded-sm relative overflow-hidden">
+                        <div class="absolute top-0 left-0 h-full ${completionRate >= 80 ? 'bg-teal' : completionRate >= 50 ? 'bg-yellow' : 'bg-red/60'} transition-all duration-300"
+                             style="width: ${completionRate}%"></div>
+                    </div>
+                    <div class="w-12 text-sm text-right">${completedCount}/${totalDays}</div>
+                `;
+                container.appendChild(habitRate);
+            });
+        }
+
+        function renderMonthlyHeatmap(month, year) {
+            const container = document.getElementById('monthlyHeatmap');
+            container.innerHTML = '';
+
+            // Add day headers
+            const dayHeaders = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+            dayHeaders.forEach(day => {
+                const header = document.createElement('div');
+                header.className = 'text-xs font-mono text-center text-muted';
+                header.textContent = day;
+                container.appendChild(header);
+            });
+
+            // Get first day of month and number of days
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startDayOfWeek = firstDay.getDay();
+
+            // Add empty cells for days before month starts
+            for (let i = 0; i < startDayOfWeek; i++) {
+                const emptyCell = document.createElement('div');
+                container.appendChild(emptyCell);
+            }
+
+            // Add days of month
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month, day);
+                const dayKey = getDayKey(date);
+                const dayData = habitsData[dayKey];
+                const score = dayData ? Math.round((dayData.completed / dayData.total) * 100) : 0;
+
+                const dayCell = document.createElement('div');
+                dayCell.className = 'aspect-square border border-ink/30 rounded-sm flex items-center justify-center text-xs font-mono relative';
+
+                // Color based on completion rate
+                if (score === 100) {
+                    dayCell.classList.add('bg-teal', 'text-ink');
+                } else if (score >= 80) {
+                    dayCell.classList.add('bg-teal/70', 'text-ink');
+                } else if (score >= 60) {
+                    dayCell.classList.add('bg-yellow/70', 'text-ink');
+                } else if (score >= 40) {
+                    dayCell.classList.add('bg-yellow/40', 'text-ink');
+                } else if (score > 0) {
+                    dayCell.classList.add('bg-red/40', 'text-ink');
+                } else {
+                    dayCell.classList.add('bg-ink/10');
+                }
+
+                dayCell.innerHTML = `
+                    <span>${day}</span>
+                    ${dayData ? `<div class="absolute -top-1 -right-1 w-2 h-2 rounded-full ${score === 100 ? 'bg-blue' : 'bg-ink/40'}"></div>` : ''}
+                `;
+
+                // Add tooltip on hover (desktop only)
+                dayCell.title = `${date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}: ${score}% complete`;
+
+                container.appendChild(dayCell);
+            }
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadHabits();
+            updateDailyTip();
+        });
+    </script>
+</body>
+</html>
