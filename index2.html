@@ -472,16 +472,20 @@
     <div class="container">
       <header class="header">
         <div class="auth-section">
-        <div class="auth-status" id="authStatus">VIEW MODE</div>
-        <button class="btn" id="loginBtn" onclick="handleGoogleLogin()">
-          <i data-lucide="log-in" width="16" height="16"></i>
-          Login with Google
-        </button>
-        <button class="btn hidden" id="logoutBtn" onclick="handleGoogleLogout()">
-          <i data-lucide="log-out" width="16" height="16"></i>
-          Logout
-        </button>
-      </div>
+          <div class="auth-status" id="authStatus">VIEW MODE</div>
+          <button class="btn" id="loginBtn" onclick="handleGoogleLogin()">
+            <i data-lucide="log-in" width="16" height="16"></i>
+            Login with Google
+          </button>
+          <button
+            class="btn hidden"
+            id="logoutBtn"
+            onclick="handleGoogleLogout()"
+          >
+            <i data-lucide="log-out" width="16" height="16"></i>
+            Logout
+          </button>
+        </div>
         <h1 class="title">Daily Habit Tracker</h1>
         <p style="font-size: 18px; font-weight: 300">
           Track your daily wellness habits and build better routines
@@ -494,9 +498,9 @@
 
       <div
         mv-app="habitTracker"
-        mv-storage="https://docs.google.com/spreadsheets/d/1Myh4hNzs3unZy1cItmJMEOe_3ax0_uMjbhokiO2uZx8/edit?usp=sharing#gid=1491528147"
+        mv-storage="https://docs.google.com/spreadsheets/d/1Myh4hNzs3unZy1cItmJMEOe_3ax0_uMjbhokiO2uZx8/edit?usp=sharing"
+        mv-storage-sheet="Week2"
         id="habitApp"
-        style="display: none"
         mv-permissions="read write"
         mv-auth="google"
       >
@@ -1084,6 +1088,8 @@
 
       // Initialize the app
       function initializeApp() {
+        console.log("Initializing app...");
+
         // Load saved data
         habitData = JSON.parse(localStorage.getItem("habitData") || "[]");
 
@@ -1098,8 +1104,24 @@
           });
         }
 
-        // Check authentication status
-        checkAuthStatus();
+        // Wait for Mavo to be ready before checking authentication
+        if (typeof Mavo !== "undefined" && Mavo.ready) {
+          Mavo.ready.then(() => {
+            console.log("Mavo is ready, checking authentication...");
+            checkAuthStatus();
+          });
+        } else {
+          console.log("Mavo not ready yet, waiting...");
+          // Wait for Mavo to load
+          setTimeout(() => {
+            if (typeof Mavo !== "undefined") {
+              initializeApp();
+            } else {
+              console.error("Mavo failed to load");
+              updateAuthUI(false);
+            }
+          }, 1000);
+        }
 
         // Initialize views
         updateWeekView();
@@ -1117,29 +1139,44 @@
 
       // Google authentication handlers
       function handleGoogleLogin() {
-        if (mavoApp && mavoApp.login) {
-          mavoApp.login('google').then(user => {
+        // Use Mavo's Google Sheets plugin authentication
+        if (mavoApp && mavoApp.storage) {
+          console.log("Initiating login...");
+          // The Google Sheets plugin handles OAuth authentication
+          // This will redirect to Google OAuth
+          mavoApp.storage.login().then(() => {
             updateAuthUI(true);
-            console.log('Logged in with Google:', user);
-          }).catch(error => {
-            console.error('Login failed:', error);
-            alert('Login failed. Please try again.');
+            console.log("Successfully logged in with Google:", mavoApp.storage.user);
+          }).catch((error) => {
+            console.error("Login failed:", error);
+            // Check if it's an OAuth redirect situation
+            if (error.message && error.message.includes("redirect")) {
+              console.log("OAuth redirect initiated");
+              return; // Don't show error for OAuth redirects
+            }
+            alert("Login failed. Please try again.");
           });
         } else {
-          // Fallback: Use OAuth2 flow manually
-          const clientId = 'YOUR_GOOGLE_CLIENT_ID'; // You need to set this
-          const redirectUri = encodeURIComponent(window.location.href);
-          const scope = encodeURIComponent('https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/userinfo.email');
-          const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=token&prompt=consent`;
-          window.location.href = authUrl;
+          // Wait for Mavo to initialize and try again
+          setTimeout(() => {
+            if (Mavo.Apps.habitTracker) {
+              mavoApp = Mavo.Apps.habitTracker;
+              handleGoogleLogin();
+            } else {
+              alert("App is still loading. Please try again in a moment.");
+            }
+          }, 1000);
         }
       }
 
       function handleGoogleLogout() {
-        if (mavoApp && mavoApp.logout) {
-          mavoApp.logout().then(() => {
+        if (mavoApp && mavoApp.storage) {
+          mavoApp.storage.logout().then(() => {
             updateAuthUI(false);
-            console.log('Logged out');
+            console.log("Logged out");
+          }).catch((error) => {
+            console.error("Logout failed:", error);
+            updateAuthUI(false); // Still update UI even if logout fails
           });
         } else {
           updateAuthUI(false);
@@ -1148,21 +1185,21 @@
 
       function updateAuthUI(loggedIn) {
         isLoggedIn = loggedIn;
-        const authStatus = document.getElementById('authStatus');
-        const loginBtn = document.getElementById('loginBtn');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const container = document.querySelector('.container');
+        const authStatus = document.getElementById("authStatus");
+        const loginBtn = document.getElementById("loginBtn");
+        const logoutBtn = document.getElementById("logoutBtn");
+        const container = document.querySelector(".container");
 
         if (loggedIn) {
-          if (authStatus) authStatus.textContent = 'EDIT MODE';
-          if (loginBtn) loginBtn.classList.add('hidden');
-          if (logoutBtn) logoutBtn.classList.remove('hidden');
-          container.classList.remove('no-edit');
+          if (authStatus) authStatus.textContent = "EDIT MODE";
+          if (loginBtn) loginBtn.classList.add("hidden");
+          if (logoutBtn) logoutBtn.classList.remove("hidden");
+          container.classList.remove("no-edit");
         } else {
-          if (authStatus) authStatus.textContent = 'VIEW MODE';
-          if (loginBtn) loginBtn.classList.remove('hidden');
-          if (logoutBtn) logoutBtn.classList.add('hidden');
-          container.classList.add('no-edit');
+          if (authStatus) authStatus.textContent = "VIEW MODE";
+          if (loginBtn) loginBtn.classList.remove("hidden");
+          if (logoutBtn) logoutBtn.classList.add("hidden");
+          container.classList.add("no-edit");
         }
 
         // Refresh Lucide icons
@@ -1171,49 +1208,50 @@
 
       // Check authentication status
       function checkAuthStatus() {
+        console.log("Checking authentication status...");
+
         // Get Mavo app instance
         mavoApp = Mavo.Apps.habitTracker;
 
-        // Set up Mavo authentication events
+        console.log("Mavo app:", mavoApp);
+        console.log("Mavo Apps:", Mavo.Apps);
+
+        // Set up Mavo authentication events for Google Sheets plugin
         if (mavoApp) {
+          console.log("Mavo app found, setting up authentication...");
+
           mavoApp.ready.then(() => {
-            // Check if user is already authenticated
-            if (mavoApp.user) {
+            console.log("Mavo app is ready");
+            console.log("Storage:", mavoApp.storage);
+            console.log("Storage user:", mavoApp.storage?.user);
+
+            // Check if user is already authenticated via the Google Sheets storage
+            if (mavoApp.storage && mavoApp.storage.user) {
+              console.log("User is already authenticated");
               updateAuthUI(true);
             } else {
+              console.log("User is not authenticated");
               updateAuthUI(false);
             }
-          });
-
-          // Listen for authentication changes
-          Mavo.hooks.add('user-login', function(env) {
-            updateAuthUI(true);
-          });
-
-          Mavo.hooks.add('user-logout', function(env) {
+          }).catch(error => {
+            console.error("Mavo app ready failed:", error);
             updateAuthUI(false);
           });
-        }
 
-        // Check URL for OAuth token (fallback method)
-        const hash = window.location.hash;
-        if (hash.includes('access_token')) {
-          const params = new URLSearchParams(hash.substring(1));
-          const token = params.get('access_token');
-          if (token) {
-            localStorage.setItem('google_oauth_token', token);
+          // Listen for authentication events from the Google Sheets plugin
+          mavoApp.element.addEventListener("mv-login", function(env) {
+            console.log("mv-login event received", env);
             updateAuthUI(true);
-            // Clean up URL
-            window.history.replaceState({}, document.title, window.location.pathname);
-          }
-        }
+          });
 
-        // Check for stored token
-        const storedToken = localStorage.getItem('google_oauth_token');
-        if (storedToken) {
-          updateAuthUI(true);
+          mavoApp.element.addEventListener("mv-logout", function(env) {
+            console.log("mv-logout event received", env);
+            updateAuthUI(false);
+          });
         } else {
-          updateAuthUI(false);
+          console.log("Mavo app not found, retrying in 1 second...");
+          // Retry after a delay
+          setTimeout(checkAuthStatus, 1000);
         }
       }
 
