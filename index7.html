@@ -3,7 +3,26 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Habit Tracker - Weekly Rhythm</title>
+    <title>Habit Tracker — Weekly Rhythm</title>
+    <!-- SEO -->
+    <link rel="canonical" href="https://habits.roomtolearn.org/" />
+    <meta name="description" content="Track your daily rhythm with a playful, 2px‑card habit tracker. See streaks, weekly trends, and monthly insights." />
+    <meta name="keywords" content="habit tracker, routines, streaks, weekly planner, circadian rhythm, monthly trends" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="theme-color" content="#F4EFEA" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Habit Tracker" />
+    <meta property="og:url" content="https://habits.roomtolearn.org/" />
+    <meta property="og:title" content="Habit Tracker — Weekly Rhythm" />
+    <meta property="og:description" content="Track your daily rhythm with a playful, 2px‑card habit tracker. See streaks, weekly trends, and monthly insights." />
+    <meta property="og:image" content="https://habits.roomtolearn.org/og-image.png" />
+    <meta property="og:image:alt" content="Habit Tracker cards and charts" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Habit Tracker — Weekly Rhythm" />
+    <meta name="twitter:description" content="Track your daily rhythm with a playful, 2px‑card habit tracker. See streaks, weekly trends, and monthly insights." />
+    <meta name="twitter:image" content="https://habits.roomtolearn.org/og-image.png" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='14' fill='%23FFDE00' stroke='%23383838' stroke-width='2'/%3E%3Cpath d='M32 6v8M32 50v8M6 32h8M50 32h8M14 14l6 6M44 44l6 6M50 14l-6 6M14 50l6-6' stroke='%23383838' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E" type="image/svg+xml" />
     <!-- Fonts per style.md: Inter + Space Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -17,6 +36,23 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <!-- Lottie web components -->
+    <script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.8.5/dist/dotlottie-wc.js" type="module"></script>
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Habit Tracker",
+      "url": "https://habits.roomtolearn.org/",
+      "description": "Track your daily rhythm with a playful, 2px-card habit tracker. See streaks, weekly trends, and monthly insights.",
+      "inLanguage": "en",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Room to Learn"
+      }
+    }
+    </script>
     <style>
       :root {
         --bg: #f4efea;
@@ -154,16 +190,34 @@
         box-shadow: none;
       }
 
-      /* Hover lift animation for cards */
-      .hover-lift {
-        transition: transform 120ms ease-in-out;
+      /* Tip carousel fade */
+      .tip-fade { transition: opacity 220ms ease-in-out; }
+      .tip-fade.hide { opacity: 0; }
+
+      /* Checkbox pop animation */
+      @keyframes pop {
+        0% { transform: scale(0.92); }
+        60% { transform: scale(1.08); }
+        100% { transform: scale(1); }
       }
-      .hover-lift:hover {
-        transform: translate(6px, -6px);
+      .habit-checkbox.pop { animation: pop 180ms ease-out; }
+
+      /* Decorative Lottie lanes (side-only, no overlap) */
+      .parallax {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 0;
+        overflow: hidden;
       }
-      .hover-lift:active {
-        transform: none;
-      }
+      .lane { position: absolute; top: 0; bottom: 0; width: 1px; }
+      .lane-left { left: 0; }
+      .lane-right { right: 0; }
+      .drifter { position: absolute; top: -40vh; opacity: .55; animation: drift-down linear infinite; }
+      @keyframes drift-down { from { transform: translateY(0); } to { transform: translateY(160vh); } }
+      @media (max-width: 728px) { .parallax { display: none; } }
 
       /* Input styles following style.md */
       .input {
@@ -310,10 +364,30 @@
     </header>
 
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-6 pb-12">
-      <!-- Stats Overview (style.md: 2px borders, offset shadow, chips) -->
+    <main class="max-w-7xl mx-auto px-6 pb-12" style="position: relative; z-index: 1;">
+        <!-- Parallax decorative clouds -->
+        <div class="parallax" aria-hidden="true">
+          <div class="lane lane-left">
+            <dotlottie-wc class="drifter" style="left:-40px;width:220px;height:220px; animation-duration: 42s; animation-delay: 0s;"
+              src="https://lottie.host/8d548e43-2045-4682-a3be-3c97282c5e16/dV4yQ05jj2.lottie" autoplay loop></dotlottie-wc>
+            <dotlottie-wc class="drifter" style="left:-80px;width:260px;height:260px; animation-duration: 68s; animation-delay: 10s;"
+              src="https://lottie.host/2a9e8f6e-1895-4269-81f3-c372f5c3162e/gZV6sdeso4.lottie" autoplay loop></dotlottie-wc>
+            <dotlottie-wc class="drifter" style="left:-20px;width:200px;height:200px; animation-duration: 58s; animation-delay: 24s;"
+              src="https://lottie.host/05fe0a55-d113-4e2c-bb5c-a8a2b4ff96bb/C9JxfYoBo1.lottie" autoplay loop></dotlottie-wc>
+          </div>
+          <div class="lane lane-right">
+            <dotlottie-wc class="drifter" style="right:-40px;width:220px;height:220px; animation-duration: 48s; animation-delay: 6s;"
+              src="https://lottie.host/2a9e8f6e-1895-4269-81f3-c372f5c3162e/gZV6sdeso4.lottie" autoplay loop></dotlottie-wc>
+            <dotlottie-wc class="drifter" style="right:-80px;width:260px;height:260px; animation-duration: 72s; animation-delay: 18s;"
+              src="https://lottie.host/05fe0a55-d113-4e2c-bb5c-a8a2b4ff96bb/C9JxfYoBo1.lottie" autoplay loop></dotlottie-wc>
+            <dotlottie-wc class="drifter" style="right:-20px;width:200px;height:200px; animation-duration: 54s; animation-delay: 30s;"
+              src="https://lottie.host/8d548e43-2045-4682-a3be-3c97282c5e16/dV4yQ05jj2.lottie" autoplay loop></dotlottie-wc>
+          </div>
+        </div>
+
+        <!-- Stats Overview (style.md: 2px borders, offset shadow, chips) -->
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div class="card hover-lift" style="padding: 16px; text-align: center">
+        <div class="card" style="padding: 16px; text-align: center">
           <div
             class="label-chip"
             style="display: inline-block; margin-bottom: 8px"
@@ -327,7 +401,7 @@
             0%
           </div>
         </div>
-        <div class="card hover-lift" style="padding: 16px; text-align: center">
+        <div class="card" style="padding: 16px; text-align: center">
           <div
             class="label-chip"
             style="display: inline-block; margin-bottom: 8px"
@@ -341,7 +415,7 @@
             0
           </div>
         </div>
-        <div class="card hover-lift" style="padding: 16px; text-align: center">
+        <div class="card" style="padding: 16px; text-align: center">
           <div
             class="label-chip"
             style="display: inline-block; margin-bottom: 8px"
@@ -355,7 +429,7 @@
             0%
           </div>
         </div>
-        <div class="card hover-lift" style="padding: 16px; text-align: center">
+        <div class="card" style="padding: 16px; text-align: center">
           <div
             class="label-chip"
             style="display: inline-block; margin-bottom: 8px"
@@ -388,7 +462,7 @@
             <div class="label-chip mb-3" style="display: inline-block">
               Daily Tip
             </div>
-            <p id="dailyTip" class="text-sm leading-relaxed"></p>
+            <p id="dailyTip" class="text-sm leading-relaxed tip-fade"></p>
           </div>
         </div>
       </div>
@@ -678,27 +752,44 @@
         },
       ];
 
-      // Daily Tips
-      const dailyTips = [
-        "Small daily actions compound into remarkable results.",
-        "Morning light sets your circadian rhythm for the entire day.",
-        "Exercise before 7 AM boosts hormones and energy all day.",
-        "Align your eating window with daylight hours.",
-        "Evening creativity: let intuition guide you.",
-        "Guitar practice is meditation that rewires your brain.",
-        "Voice journaling clears the mind for better sleep.",
-        "Breathe: 4s in, 6-8s out to activate calm.",
-        "Late nights are fine—prioritize recovery tomorrow.",
-        "Design your environment better than your willpower.",
-        "Build identity-based habits, not goal-based ones.",
-        "Sleep is the foundation of performance.",
+      // Tips (from weekly-habit-tracker-notes.md)
+      const tips = [
+        "End the day with completion, not continuation.",
+        "Momentum is not a command. Let it settle.",
+        "“One more” is just dopamine talking.",
+        "Rest amplifies tomorrow.",
+        "You don’t need to squeeze more out of the night.",
+        "The high has already happened — it’s safe to land.",
+        "Closure > Stimulation.",
+        "The urge will pass in 60–90 seconds.",
+        "You’ve felt this before — you can let it pass.",
+        "A calm body makes a clear mind.",
+        "Identity: I’m someone who lands the night well.",
+        "The win is in the ending, not the extra activity.",
+        "Leave something for tomorrow on purpose.",
+        "The day is already complete.",
+        "Quiet is where the integration happens.",
+        "When the night ends well, the morning begins strong.",
+        "Stimulation without closure leads to restlessness.",
+        "Closure ritual = nervous system safety.",
+        "I am allowed to stop now.",
+        "Sleep is not disengaging — it’s processing.",
+        "Landing beats crashing.",
+        "Put the energy into the breath, not the screen.",
+        "Let the guitar absorb the momentum.",
+        "Stretch to transition, not to perform.",
+        "Journal to release leftover tension.",
+        "Warm light sends a safe signal to your brain.",
+        "The world can wait. The body cannot.",
+        "Tonight’s goal isn’t achievement — it’s return.",
+        "What mattered today is already with you.",
       ];
 
       // Initialize
       document.addEventListener("DOMContentLoaded", function () {
         lucide.createIcons({ attrs: { "stroke-width": 1.5 } });
         initAuth();
-        updateDailyTip();
+        startTipsCarousel();
       });
 
       // Authentication
@@ -988,7 +1079,7 @@
                                   dayData.habits[habit.id] || false;
 
                                 return `
-                                    <div class="card hover-lift" style="padding: 12px; ${
+                                    <div class="card" style="padding: 12px; ${
                                       isChecked ? "background: #f0fdf4;" : ""
                                     }">
                                         <div class="flex items-center gap-3">
@@ -1007,6 +1098,7 @@
                                             </div>
                                             <input type="checkbox"
                                                    class="habit-checkbox"
+                                                   id="cb-${dayKey}-${habit.id}"
                                                    ${isChecked ? "checked" : ""}
                                                    onchange="toggleHabit('${dayKey}', '${
                                   habit.id
@@ -1051,8 +1143,8 @@
       }
 
       // Habit Toggle
-      async function toggleHabit(dayKey, habitId) {
-        if (!currentUser) return; // Only logged-in users can edit
+        async function toggleHabit(dayKey, habitId) {
+            if (!currentUser) return; // Only logged-in users can edit
 
         const dayData = habitsData[dayKey];
         if (!dayData) {
@@ -1073,8 +1165,19 @@
           Boolean
         ).length;
 
-        autoSave();
-        renderAllViews();
+            autoSave();
+            renderAllViews();
+
+            // Checkbox pop animation after re-render
+            requestAnimationFrame(() => {
+              const cb = document.getElementById(`cb-${dayKey}-${habitId}`);
+              if (cb) {
+                cb.classList.remove('pop');
+                // force reflow to restart animation
+                void cb.offsetWidth;
+                cb.classList.add('pop');
+              }
+            });
 
         if (!wasChecked) {
           const encouragements = [
@@ -1594,10 +1697,27 @@
       }
 
       // Daily Tip
-      function updateDailyTip() {
-        const tipIndex = new Date().getDate() % dailyTips.length;
-        document.getElementById("dailyTip").textContent = dailyTips[tipIndex];
+      // Tip carousel, cycles every 4s with fade
+      let tipInterval = null;
+      function startTipsCarousel() {
+        const el = document.getElementById("dailyTip");
+        if (!el) return;
+        let idx = 0;
+        const setTip = () => {
+          el.classList.add("tip-fade", "hide");
+          setTimeout(() => {
+            el.textContent = tips[idx % tips.length];
+            el.classList.remove("hide");
+          }, 180);
+          idx++;
+        };
+        // initial
+        el.textContent = tips[0];
+        if (tipInterval) clearInterval(tipInterval);
+        tipInterval = setInterval(setTip, 4000);
       }
+
+      // No JS parallax: decorative Lotties drift down via CSS keyframes
     </script>
   </body>
 </html>
