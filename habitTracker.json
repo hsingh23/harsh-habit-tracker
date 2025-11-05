@@ -11,5 +11,34 @@
 	"habitData": {
 		"habitName": "Habit Name",
 		"habitTime": "Time"
-	}
+	},
+	"today.exercised": "\n                ",
+	"today.exerciseTime": "t\n",
+	"today.sunlight": "\n                ",
+	"today.sunlightTime": "\n                Not set\n              ",
+	"today.breakfast": "\n                ",
+	"today.breakfastTime": "\n                Not set\n              ",
+	"today.protein": "\n                ",
+	"today.ontimeSleep": "\n                ",
+	"today.bedtime": "Not set",
+	"today.winddown": "\n                ",
+	"today.noscreens": "\n                ",
+	"weekHabits": [
+		{
+			"dayName": "Day Name",
+			"exercised": "\n                    ",
+			"exerciseTime": "Not set",
+			"sunlight": "\n                    ",
+			"breakfast": "\n                    ",
+			"protein": "\n                    ",
+			"ontimeSleep": "\n                    ",
+			"bedtime": "Not set",
+			"winddown": "\n                    ",
+			"noscreens": "\n                    ",
+			"walk": "\n                    "
+		}
+	],
+	"recentDays": [
+		"\n            "
+	]
 }
