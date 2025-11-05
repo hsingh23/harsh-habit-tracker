@@ -1,0 +1,15 @@
+{
+	"bed_time": "11:53",
+	"weekExerciseCount": "0",
+	"weekSleepCount": "0",
+	"weekNutritionCount": "0",
+	"weekScore": "0%",
+	"monthTotalDays": "0",
+	"monthExerciseStreak": "0",
+	"monthSleepStreak": "0",
+	"monthAvgScore": "0%",
+	"habitData": {
+		"habitName": "Habit Name",
+		"habitTime": "Time"
+	}
+}
