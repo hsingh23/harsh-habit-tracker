@@ -1,0 +1,38 @@
+[
+  {
+    "date": "2025-01-05",
+    "name": "",
+    "week_start": "2025-01-06",
+    "month_key": "2025-01",
+    "exercise": true,
+    "slept_on_time": true,
+    "eat_on_time": true,
+    "protein": true,
+    "winddown_done": true,
+    "sunlight": true,
+    "bed_time": "22:30",
+    "morning_light_time": "07:00",
+    "breakfast_time": "08:00",
+    "workout_time": "08:30",
+    "winddown_start": "21:00",
+    "notes": "Great start to the week! All habits completed."
+  },
+  {
+    "date": "2025-01-04",
+    "name": "",
+    "week_start": "2025-01-06",
+    "month_key": "2025-01",
+    "exercise": false,
+    "slept_on_time": true,
+    "eat_on_time": true,
+    "protein": true,
+    "winddown_done": false,
+    "sunlight": true,
+    "bed_time": "23:00",
+    "morning_light_time": "07:30",
+    "breakfast_time": "08:00",
+    "workout_time": "",
+    "winddown_start": "",
+    "notes": "Rest day from exercise but still maintained good routines."
+  }
+]
