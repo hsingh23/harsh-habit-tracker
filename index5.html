@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Habit Tracker - Daily Rhythm</title>
+    <script src="https://unpkg.com/mavo@latest/dist/mavo.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #f4efea;
+        --ink: #383838;
+        --card: #ffffff;
+        --yellow: #ffde00;
+        --blue: #6fc2ff;
+        --focus: #2ba5ff;
+        --muted: #a1a1a1;
+        --radius: 2px;
+        --border-w: 2px;
+        --success: #53dbc9;
+        --warning: #ff7169;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        background: var(--bg);
+        font-family: "Inter", sans-serif;
+        color: var(--ink);
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        line-height: 1.6;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+
+      h1,
+      h2,
+      h3 {
+        font-family: "Space Mono", monospace;
+        text-transform: uppercase;
+        letter-spacing: -0.02em;
+        font-weight: 400;
+      }
+
+      h1 {
+        font-size: clamp(32px, 5vw, 56px);
+        margin-bottom: 16px;
+      }
+
+      h2 {
+        font-size: clamp(24px, 4vw, 32px);
+        margin: 32px 0 16px;
+      }
+
+      h3 {
+        font-size: clamp(20px, 3vw, 24px);
+        margin: 24px 0 12px;
+      }
+
+      .card {
+        background: var(--card);
+        border: var(--border-w) solid var(--ink);
+        box-shadow: -8px 8px 0 0 var(--ink);
+        border-radius: var(--radius);
+        padding: 24px;
+        margin-bottom: 24px;
+        transition: transform 120ms ease-in-out;
+      }
+
+      .card:hover {
+        transform: translate(4px, -4px);
+      }
+
+      .btn {
+        background: var(--blue);
+        border: var(--border-w) solid var(--ink);
+        border-radius: var(--radius);
+        color: var(--ink);
+        text-transform: uppercase;
+        font: 400 16px "Inter", sans-serif;
+        padding: 16px 22px;
+        cursor: pointer;
+        transition: transform 120ms ease-in-out, box-shadow 120ms ease-in-out;
+        box-shadow: -6px 6px 0 0 var(--ink);
+        text-decoration: none;
+        display: inline-block;
+      }
+
+      .btn:hover {
+        transform: translate(7px, -7px);
+        box-shadow: -8px 8px 0 0 var(--ink);
+      }
+
+      .btn:active {
+        transform: translate(0px, 0px);
+        box-shadow: -4px 4px 0 0 var(--ink);
+      }
+
+      .btn.secondary {
+        background: var(--bg);
+      }
+
+      .habit-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px;
+        background: var(--card);
+        border: var(--border-w) solid var(--ink);
+        border-radius: var(--radius);
+        margin-bottom: 12px;
+        transition: all 120ms ease-in-out;
+      }
+
+      .habit-item:hover {
+        transform: translate(2px, -2px);
+        box-shadow: -4px 4px 0 0 var(--ink);
+      }
+
+      .habit-checkbox {
+        width: 24px;
+        height: 24px;
+        border: var(--border-w) solid var(--ink);
+        border-radius: var(--radius);
+        background: transparent;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: background 120ms ease-in-out, border-color 120ms ease-in-out;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        position: relative;
+      }
+
+      .habit-checkbox:checked {
+        background: var(--success);
+        border-color: var(--success);
+      }
+
+      .habit-checkbox:checked::after {
+        content: '✓';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: var(--ink);
+        font-size: 16px;
+        font-weight: bold;
+      }
+
+      .habit-checkbox:hover {
+        border-color: var(--focus);
+      }
+
+      .habit-label {
+        flex: 1;
+        font-size: 16px;
+        font-weight: 400;
+      }
+
+      .habit-time {
+        font-size: 14px;
+        color: var(--muted);
+        font-family: "Space Mono", monospace;
+        text-transform: uppercase;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 16px;
+        margin-bottom: 32px;
+      }
+
+      .stat-card {
+        background: var(--card);
+        border: var(--border-w) solid var(--ink);
+        box-shadow: -6px 6px 0 0 var(--ink);
+        border-radius: var(--radius);
+        padding: 20px;
+        text-align: center;
+      }
+
+      .stat-number {
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--ink);
+        margin-bottom: 4px;
+      }
+
+      .stat-label {
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+      }
+
+      .view-tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 24px;
+        border-bottom: var(--border-w) solid var(--ink);
+        padding-bottom: 16px;
+      }
+
+      .view-tab {
+        background: var(--bg);
+        color: var(--ink);
+        border: var(--border-w) solid var(--ink);
+        border-radius: var(--radius);
+        padding: 8px 16px;
+        font: 400 14px "Inter", sans-serif;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 120ms ease-in-out;
+        box-shadow: -4px 4px 0 0 var(--ink);
+      }
+
+      .view-tab:hover {
+        transform: translate(2px, -2px);
+      }
+
+      .view-tab.active {
+        background: var(--ink);
+        color: #ffffff;
+        border: none;
+        box-shadow: none;
+      }
+
+      .notes-section {
+        margin-top: 24px;
+      }
+
+      .notes-textarea {
+        width: 100%;
+        min-height: 120px;
+        background: rgba(248, 248, 247, 0.7);
+        border: var(--border-w) solid var(--ink);
+        border-radius: var(--radius);
+        font: 400 16px "Inter", sans-serif;
+        padding: 16px;
+        resize: vertical;
+        transition: border-color 120ms ease-in-out;
+      }
+
+      .notes-textarea:focus {
+        outline: none;
+        border-color: var(--focus);
+      }
+
+      .date-header {
+        font-family: "Space Mono", monospace;
+        font-size: 18px;
+        font-weight: 400;
+        text-transform: uppercase;
+        background: var(--ink);
+        color: #ffffff;
+        padding: 8px 12px;
+        border-radius: var(--radius);
+        display: inline-block;
+        margin-bottom: 16px;
+      }
+
+      .day-section {
+        margin-bottom: 32px;
+      }
+
+      /* Mavo UI Customization */
+      .mv-bar {
+        background: var(--ink) !important;
+        border: var(--border-w) solid var(--ink) !important;
+        border-radius: var(--radius) !important;
+        padding: 12px 16px !important;
+        margin-bottom: 24px !important;
+        box-shadow: -4px 4px 0 0 rgba(0, 0, 0, 0.2) !important;
+      }
+
+      .mv-bar button {
+        background: var(--card) !important;
+        border: var(--border-w) solid var(--card) !important;
+        border-radius: var(--radius) !important;
+        color: var(--ink) !important;
+        text-transform: uppercase !important;
+        font: 400 14px "Inter", sans-serif !important;
+        padding: 8px 16px !important;
+        margin: 0 4px !important;
+        cursor: pointer !important;
+        transition: all 120ms ease-in-out !important;
+      }
+
+      .mv-bar button:hover {
+        background: var(--blue) !important;
+        transform: translate(2px, -2px) !important;
+      }
+
+      .mv-status {
+        color: #ffffff !important;
+        font-family: "Space Mono", monospace !important;
+        font-size: 14px !important;
+        text-transform: uppercase !important;
+        margin-right: 16px !important;
+      }
+
+      .mv-status a {
+        color: var(--blue) !important;
+      }
+
+      .mv-avatar {
+        width: 24px !important;
+        height: 24px !important;
+        border-radius: var(--radius) !important;
+        border: var(--border-w) solid var(--card) !important;
+        vertical-align: middle !important;
+        margin-left: 8px !important;
+      }
+
+      .mv-message {
+        background: var(--yellow) !important;
+        border: var(--border-w) solid var(--ink) !important;
+        border-radius: var(--radius) !important;
+        color: var(--ink) !important;
+        font-family: "Inter", sans-serif !important;
+        padding: 12px 16px !important;
+        margin-bottom: 16px !important;
+        box-shadow: -4px 4px 0 0 var(--ink) !important;
+      }
+
+      .mv-login,
+      .mv-logout {
+        background: var(--blue) !important;
+      }
+
+      [mv-mode="edit"] .habit-item {
+        cursor: pointer;
+      }
+
+      [property]:empty:not([mv-mode="edit"]):before {
+        content: "Click to add notes...";
+        color: var(--muted);
+        font-style: italic;
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: var(--bg);
+        border: var(--border-w) solid var(--ink);
+        border-radius: var(--radius);
+        overflow: hidden;
+        margin: 8px 0;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: var(--success);
+        transition: width 300ms ease-in-out;
+        max-width: 100%;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 16px;
+        }
+
+        .stats-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .view-tabs {
+          flex-wrap: wrap;
+        }
+
+        .habit-item {
+          padding: 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <header style="margin-bottom: 48px">
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+          "
+        >
+          <div
+            style="
+              width: 48px;
+              height: 48px;
+              background: var(--ink);
+              border: var(--border-w) solid var(--ink);
+              border-radius: var(--radius);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            "
+          >
+            <i
+              data-lucide="activity"
+              style="color: var(--bg); width: 24px; height: 24px"
+            ></i>
+          </div>
+          <h1 style="margin: 0">HABIT TRACKER</h1>
+        </div>
+        <div class="date-header">Daily Rhythm &amp; Circadian Health</div>
+      </header>
+
+      <!-- Mavo App -->
+      <div
+        mv-app="habitTracker"
+        mv-storage="https://github.com/hsingh23/harsh-habit-tracker"
+        mv-bar="status edit save logout"
+      >
+        <!-- View Selection -->
+        <div class="view-tabs" mv-if="not(isLoggedIn)">
+          <button class="view-tab active" onclick="showView('week')">
+            Week View
+          </button>
+          <button class="view-tab" onclick="showView('month')">
+            Month View
+          </button>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-number" mv-value="count(today.exercised, today.sunlight, today.breakfast, today.protein, today.ontimeSleep, today.winddown, today.noscreens)">
+              0
+            </div>
+            <div class="stat-label">Today</div>
+            <div class="progress-bar">
+              <div
+                class="progress-fill"
+                mv-attr-style="width: [if(today.exercised, 1, 0) + if(today.sunlight, 1, 0) + if(today.breakfast, 1, 0) + if(today.protein, 1, 0) + if(today.ontimeSleep, 1, 0) + if(today.winddown, 1, 0) + if(today.noscreens, 1, 0)]px"
+                style="width: 0px"
+              ></div>
+            </div>
+          </div>
+          <div
+            class="stat-card"
+            style="
+              border-color: var(--success);
+              box-shadow: -6px 6px 0 0 var(--success);
+            "
+          >
+            <div
+              class="stat-number"
+              mv-value="if(today.exercised, 1, 0) + if(today.sunlight, 1, 0) + if(today.breakfast, 1, 0) + if(today.protein, 1, 0) + if(today.ontimeSleep, 1, 0) + if(today.winddown, 1, 0) + if(today.noscreens, 1, 0)"
+            >
+              0
+            </div>
+            <div class="stat-label">Total Habits</div>
+          </div>
+          <div
+            class="stat-card"
+            style="
+              border-color: var(--yellow);
+              box-shadow: -6px 6px 0 0 var(--yellow);
+            "
+          >
+            <div
+              class="stat-number"
+              mv-value="if(today.exercised, 1, 0)"
+            >
+              0
+            </div>
+            <div class="stat-label">Exercise</div>
+          </div>
+          <div
+            class="stat-card"
+            style="
+              border-color: var(--blue);
+              box-shadow: -6px 6px 0 0 var(--blue);
+            "
+          >
+            <div
+              class="stat-number"
+              mv-value="if(today.sunlight, 1, 0)"
+            >
+              0
+            </div>
+            <div class="stat-label">Sunlight</div>
+          </div>
+        </div>
+
+        <!-- Today's Habits (3-day view for logged in users) -->
+        <div class="day-section" mv-if="isLoggedIn">
+          <h2>Today - Today</h2>
+
+          <div class="card">
+            <h3 style="margin-top: 0">Morning Routine</h3>
+
+            <div class="habit-item">
+              <input
+                type="checkbox"
+                class="habit-checkbox"
+                property="today.exercised"
+                mv-class-checked="today.exercised"
+              />
+              <div class="habit-label">Morning Exercise</div>
+              <div class="habit-time" property="today.exerciseTime">
+                Not set
+              </div>
+            </div>
+
+            <div class="habit-item">
+              <input
+                type="checkbox"
+                class="habit-checkbox"
+                property="today.sunlight"
+                mv-class-checked="today.sunlight"
+              />
+              <div class="habit-label">Morning Sunlight Exposure</div>
+              <div class="habit-time" property="today.sunlightTime">
+                Not set
+              </div>
+            </div>
+
+            <div class="habit-item">
+              <input
+                type="checkbox"
+                class="habit-checkbox"
+                property="today.breakfast"
+                mv-class-checked="today.breakfast"
+              />
+              <div class="habit-label">Ate Breakfast on Time</div>
+              <div class="habit-time" property="today.breakfastTime">
+                Not set
+              </div>
+            </div>
+
+            <div class="habit-item">
+              <input
+                type="checkbox"
+                class="habit-checkbox"
+                property="today.protein"
+                mv-class-checked="today.protein"
+              />
+              <div class="habit-label">Had Adequate Protein</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 style="margin-top: 0">Evening Routine</h3>
+
+            <div class="habit-item">
+              <input
+                type="checkbox"
+                class="habit-checkbox"
+                property="today.ontimeSleep"
+                mv-class-checked="today.ontimeSleep"
+              />
+              <div class="habit-label">Slept on Time (by 9 PM)</div>
+              <div class="habit-time" property="today.bedtime">Not set</div>
+            </div>
+
+            <div class="habit-item">
+              <input
+                type="checkbox"
+                class="habit-checkbox"
+                property="today.winddown"
+                mv-class-checked="today.winddown"
+              />
+              <div class="habit-label">
+                Wind-down Routine (Guitar + Stretch)
+              </div>
+            </div>
+
+            <div class="habit-item">
+              <input
+                type="checkbox"
+                class="habit-checkbox"
+                property="today.noscreens"
+                mv-class-checked="today.noscreens"
+              />
+              <div class="habit-label">No Screens Before Bed</div>
+            </div>
+          </div>
+
+          <!-- Daily Notes -->
+          <div class="card notes-section">
+            <h3 style="margin-top: 0">Daily Notes</h3>
+            <textarea
+              class="notes-textarea"
+              property="today.notes"
+              placeholder="How did you feel today? Any observations about your energy, mood, or sleep quality?"
+            ></textarea>
+          </div>
+        </div>
+
+        <!-- Week View for non-logged users -->
+        <div id="weekView" mv-if="not(isLoggedIn)">
+          <h2>This Week's Progress</h2>
+
+          <div mv-list="weekHabits">
+            <div mv-list-item>
+            <div class="day-section">
+              <div class="date-header" property="dayName">Day Name</div>
+
+              <div class="card">
+                <div class="habit-item">
+                  <input
+                    type="checkbox"
+                    class="habit-checkbox"
+                    property="exercised"
+                    mv-class-checked="exercised"
+                  />
+                  <div class="habit-label">Exercise</div>
+                  <div class="habit-time" property="exerciseTime">Not set</div>
+                </div>
+
+                <div class="habit-item">
+                  <input
+                    type="checkbox"
+                    class="habit-checkbox"
+                    property="sunlight"
+                    mv-class-checked="sunlight"
+                  />
+                  <div class="habit-label">Sunlight</div>
+                </div>
+
+                <div class="habit-item">
+                  <input
+                    type="checkbox"
+                    class="habit-checkbox"
+                    property="breakfast"
+                    mv-class-checked="breakfast"
+                  />
+                  <div class="habit-label">Breakfast</div>
+                </div>
+
+                <div class="habit-item">
+                  <input
+                    type="checkbox"
+                    class="habit-checkbox"
+                    property="protein"
+                    mv-class-checked="protein"
+                  />
+                  <div class="habit-label">Protein</div>
+                </div>
+
+                <div class="habit-item">
+                  <input
+                    type="checkbox"
+                    class="habit-checkbox"
+                    property="ontimeSleep"
+                    mv-class-checked="ontimeSleep"
+                  />
+                  <div class="habit-label">Sleep on Time</div>
+                  <div class="habit-time" property="bedtime">Not set</div>
+                </div>
+
+                <div class="habit-item">
+                  <input
+                    type="checkbox"
+                    class="habit-checkbox"
+                    property="winddown"
+                    mv-class-checked="winddown"
+                  />
+                  <div class="habit-label">Wind-down</div>
+                </div>
+
+                <div class="habit-item">
+                  <input
+                    type="checkbox"
+                    class="habit-checkbox"
+                    property="noscreens"
+                    mv-class-checked="noscreens"
+                  />
+                  <div class="habit-label">No Screens</div>
+                </div>
+
+                <div class="habit-item">
+                  <input
+                    type="checkbox"
+                    class="habit-checkbox"
+                    property="walk"
+                    mv-class-checked="walk"
+                  />
+                  <div class="habit-label">Afternoon Walk</div>
+                </div>
+
+                <textarea
+                  class="notes-textarea"
+                  property="notes"
+                  placeholder="Daily notes..."
+                  style="margin-top: 16px"
+                ></textarea>
+              </div>
+            </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Month View for non-logged users -->
+        <div id="monthView" style="display: none" mv-if="not(isLoggedIn)">
+          <h2>Monthly Overview</h2>
+          <div class="card">
+            <p
+              style="
+                text-align: center;
+                color: var(--muted);
+                font-style: italic;
+              "
+            >
+              Monthly calendar view coming soon... For now, use the week view to
+              track your habits consistently.
+            </p>
+          </div>
+        </div>
+
+        <!-- Recent Progress -->
+        <div class="card" mv-if="isLoggedIn">
+          <h3>Recent Progress (Last 3 Days)</h3>
+          <div mv-list="recentDays">
+            <div mv-list-item>
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 12px 0;
+                border-bottom: 1px solid var(--bg);
+              "
+            >
+              <span
+                style="
+                  font-family: 'Space Mono', monospace;
+                  text-transform: uppercase;
+                  font-size: 14px;
+                "
+                >[date]</span
+              >
+              <span style="color: var(--muted)"
+                >[count(exercised, sunlight, breakfast, protein, ontimeSleep,
+                winddown)] / 7 habits</span
+              >
+            </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Initialize Lucide icons
+      document.addEventListener("DOMContentLoaded", function () {
+        lucide.createIcons();
+      });
+
+      // View switching for non-logged users
+      function showView(view) {
+        const weekView = document.getElementById("weekView");
+        const monthView = document.getElementById("monthView");
+        const tabs = document.querySelectorAll(".view-tab");
+
+        tabs.forEach((tab) => tab.classList.remove("active"));
+
+        if (view === "week") {
+          weekView.style.display = "block";
+          monthView.style.display = "none";
+          tabs[0].classList.add("active");
+        } else {
+          weekView.style.display = "none";
+          monthView.style.display = "block";
+          tabs[1].classList.add("active");
+        }
+      }
+
+      // Check login status
+      function checkLoginStatus() {
+        // This would be handled by Mavo's built-in authentication
+        return document.querySelector(".mv-logged-in") !== null;
+      }
+
+      // Re-initialize icons when Mavo updates content
+      document.addEventListener("mavo:render", function () {
+        lucide.createIcons();
+      });
+    </script>
+  </body>
+</html>

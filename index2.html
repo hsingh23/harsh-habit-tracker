@@ -424,14 +424,42 @@
         display: none;
       }
 
+      /* Hide Mavo's default bar */
       .mv-bar {
-        background: var(--ink);
-        color: var(--card);
-        padding: 8px 16px;
-        border-radius: var(--radius);
-        margin-bottom: 16px;
+        display: none !important;
       }
 
+      /* Style Mavo's edit and save buttons to match our design */
+      .mv-edit, .mv-save {
+        background: var(--bg);
+        border: var(--border-w) solid var(--ink);
+        border-radius: var(--radius);
+        color: var(--ink);
+        font: 400 16px/1.2 'Inter', sans-serif;
+        text-transform: uppercase;
+        padding: 16.5px 22px;
+        cursor: pointer;
+        transition: transform 120ms ease-in-out, box-shadow 120ms ease-in-out;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .mv-edit:hover, .mv-save:hover {
+        transform: translate(6px, -6px);
+        box-shadow: -6px 6px 0 0 var(--ink), -12px 12px 0 0 rgba(56, 56, 56, 0.1);
+      }
+
+      .mv-edit:active, .mv-save:active {
+        transform: none;
+        box-shadow: none;
+      }
+
+      .mv-save {
+        background: var(--blue);
+      }
+
+      
       [mv-app] {
         max-width: none;
       }
@@ -513,8 +541,8 @@
           <button class="toggle-btn" onclick="showView('month')">
             Month View
           </button>
-          <button class="toggle-btn mv-edit-if" onclick="showView('edit')">
-            Edit Today
+          <button class="toggle-btn mv-edit-if mv-edit">
+            Edit
           </button>
         </div>
 
@@ -726,7 +754,7 @@
             </div>
 
             <div style="margin-top: 32px" mv-edit-if>
-              <button class="btn primary" onclick="saveToday()">
+              <button class="btn primary mv-save">
                 <i data-lucide="save" width="16" height="16"></i>
                 Save Today's Habits
               </button>
@@ -924,51 +952,7 @@
         }
       }
 
-      // Save today's habits
-      function saveToday() {
-        // Collect form data
-        const todayData = {
-          date: new Date().toISOString().split("T")[0],
-          exercise: document
-            .querySelector('[property="exercise"]')
-            .classList.contains("checked"),
-          slept_on_time: document
-            .querySelector('[property="slept_on_time"]')
-            .classList.contains("checked"),
-          eat_on_time: document
-            .querySelector('[property="eat_on_time"]')
-            .classList.contains("checked"),
-          protein: document
-            .querySelector('[property="protein"]')
-            .classList.contains("checked"),
-          winddown_done: document
-            .querySelector('[property="winddown_done"]')
-            .classList.contains("checked"),
-          sunlight: document
-            .querySelector('[property="sunlight"]')
-            .classList.contains("checked"),
-          bed_time: document.querySelector('[property="bed_time"]').value,
-          notes: document.querySelector('[property="notes"]').value,
-          timestamp: new Date().toISOString(),
-        };
-
-        // Save to local storage (in real app, this would save to Google Sheets)
-        let savedData = JSON.parse(localStorage.getItem("habitData") || "[]");
-        const existingIndex = savedData.findIndex(
-          (d) => d.date === todayData.date
-        );
-
-        if (existingIndex >= 0) {
-          savedData[existingIndex] = todayData;
-        } else {
-          savedData.push(todayData);
-        }
-
-        localStorage.setItem("habitData", JSON.stringify(savedData));
-        habitData = savedData;
-
-        alert("Today's habits have been saved!");
-      }
+      // Note: Using Mavo's built-in save functionality instead of custom saveToday function
 
       // Generate week view
       function updateWeekView() {
