@@ -473,14 +473,14 @@
       <header class="header">
         <div class="auth-section">
           <div class="auth-status" id="authStatus">VIEW MODE</div>
-          <button class="btn" id="loginBtn" onclick="handleGoogleLogin()">
+          <button class="btn" id="loginBtn" onclick="handleGitHubLogin()">
             <i data-lucide="log-in" width="16" height="16"></i>
-            Login with Google
+            Login with GitHub
           </button>
           <button
             class="btn hidden"
             id="logoutBtn"
-            onclick="handleGoogleLogout()"
+            onclick="handleGitHubLogout()"
           >
             <i data-lucide="log-out" width="16" height="16"></i>
             Logout
@@ -498,11 +498,10 @@
 
       <div
         mv-app="habitTracker"
-        mv-storage="https://docs.google.com/spreadsheets/d/1Myh4hNzs3unZy1cItmJMEOe_3ax0_uMjbhokiO2uZx8/edit?usp=sharing"
-        mv-storage-sheet="Week2"
+        mv-storage="https://github.com/hsingh23/harsh-habit-tracker"
         id="habitApp"
         mv-permissions="read write"
-        mv-auth="google"
+        mv-auth="github"
       >
         <div class="toggle-view">
           <button class="toggle-btn active" onclick="showView('day')">
@@ -1137,23 +1136,17 @@
         setTimeout(() => lucide.createIcons(), 100);
       }
 
-      // Google authentication handlers
-      function handleGoogleLogin() {
-        // Use Mavo's Google Sheets plugin authentication
+      // GitHub authentication handlers
+      function handleGitHubLogin() {
+        // Use Mavo's GitHub backend authentication
         if (mavoApp && mavoApp.storage) {
-          console.log("Initiating login...");
-          // The Google Sheets plugin handles OAuth authentication
-          // This will redirect to Google OAuth
+          console.log("Initiating GitHub login...");
+          // The GitHub backend handles OAuth authentication
           mavoApp.storage.login().then(() => {
             updateAuthUI(true);
-            console.log("Successfully logged in with Google:", mavoApp.storage.user);
+            console.log("Successfully logged in with GitHub:", mavoApp.storage.user);
           }).catch((error) => {
-            console.error("Login failed:", error);
-            // Check if it's an OAuth redirect situation
-            if (error.message && error.message.includes("redirect")) {
-              console.log("OAuth redirect initiated");
-              return; // Don't show error for OAuth redirects
-            }
+            console.error("GitHub login failed:", error);
             alert("Login failed. Please try again.");
           });
         } else {
@@ -1161,7 +1154,7 @@
           setTimeout(() => {
             if (Mavo.Apps.habitTracker) {
               mavoApp = Mavo.Apps.habitTracker;
-              handleGoogleLogin();
+              handleGitHubLogin();
             } else {
               alert("App is still loading. Please try again in a moment.");
             }
@@ -1169,11 +1162,11 @@
         }
       }
 
-      function handleGoogleLogout() {
+      function handleGitHubLogout() {
         if (mavoApp && mavoApp.storage) {
           mavoApp.storage.logout().then(() => {
             updateAuthUI(false);
-            console.log("Logged out");
+            console.log("Logged out from GitHub");
           }).catch((error) => {
             console.error("Logout failed:", error);
             updateAuthUI(false); // Still update UI even if logout fails
@@ -1208,7 +1201,7 @@
 
       // Check authentication status
       function checkAuthStatus() {
-        console.log("Checking authentication status...");
+        console.log("Checking GitHub authentication status...");
 
         // Get Mavo app instance
         mavoApp = Mavo.Apps.habitTracker;
@@ -1216,21 +1209,21 @@
         console.log("Mavo app:", mavoApp);
         console.log("Mavo Apps:", Mavo.Apps);
 
-        // Set up Mavo authentication events for Google Sheets plugin
+        // Set up Mavo authentication events for GitHub backend
         if (mavoApp) {
-          console.log("Mavo app found, setting up authentication...");
+          console.log("Mavo app found, setting up GitHub authentication...");
 
           mavoApp.ready.then(() => {
             console.log("Mavo app is ready");
             console.log("Storage:", mavoApp.storage);
             console.log("Storage user:", mavoApp.storage?.user);
 
-            // Check if user is already authenticated via the Google Sheets storage
+            // Check if user is already authenticated via GitHub
             if (mavoApp.storage && mavoApp.storage.user) {
-              console.log("User is already authenticated");
+              console.log("User is already authenticated with GitHub");
               updateAuthUI(true);
             } else {
-              console.log("User is not authenticated");
+              console.log("User is not authenticated with GitHub");
               updateAuthUI(false);
             }
           }).catch(error => {
@@ -1238,14 +1231,14 @@
             updateAuthUI(false);
           });
 
-          // Listen for authentication events from the Google Sheets plugin
+          // Listen for authentication events from GitHub backend
           mavoApp.element.addEventListener("mv-login", function(env) {
-            console.log("mv-login event received", env);
+            console.log("mv-login event received from GitHub", env);
             updateAuthUI(true);
           });
 
           mavoApp.element.addEventListener("mv-logout", function(env) {
-            console.log("mv-logout event received", env);
+            console.log("mv-logout event received from GitHub", env);
             updateAuthUI(false);
           });
         } else {
