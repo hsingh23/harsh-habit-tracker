@@ -12,17 +12,10 @@
 		"habitName": "Habit Name",
 		"habitTime": "Time"
 	},
-	"today.exercised": "\n                ",
 	"today.exerciseTime": "t\n",
-	"today.sunlight": "\n                ",
-	"today.sunlightTime": "\n                Not set\n              ",
-	"today.breakfast": "\n                ",
-	"today.breakfastTime": "\n                Not set\n              ",
-	"today.protein": "\n                ",
-	"today.ontimeSleep": "\n                ",
+	"today.sunlightTime": "Not set",
+	"today.breakfastTime": "Not set",
 	"today.bedtime": "Not set",
-	"today.winddown": "\n                ",
-	"today.noscreens": "\n                ",
 	"weekHabits": [
 		{
 			"dayName": "Day Name",
@@ -38,7 +31,5 @@
 			"walk": "\n                    "
 		}
 	],
-	"recentDays": [
-		"\n            "
-	]
+	"recentDays": []
 }
