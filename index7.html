@@ -37,6 +37,18 @@
             box-shadow: -8px 8px 0 0 var(--ink);
         }
 
+        .btn-hover {
+            transition: transform 120ms ease-in-out;
+        }
+
+        .btn-hover:hover {
+            transform: translate(7px, -7px);
+        }
+
+        .btn-hover:active {
+            transform: none;
+        }
+
         .habit-checkbox {
             appearance: none;
             width: 20px;
@@ -68,6 +80,8 @@
             background: rgba(248, 248, 247, 0.7);
             border: var(--border-w) solid var(--ink);
             border-radius: var(--radius);
+            font: 400 16px 'Inter', sans-serif;
+            padding: 16px;
             transition: border-color 0.12s ease-in-out;
         }
 
@@ -91,6 +105,78 @@
             }
         }
 
+        /* Button styles following style.md */
+        .btn {
+            border: var(--border-w) solid var(--ink);
+            border-radius: var(--radius);
+            background: var(--bg);
+            color: var(--ink);
+            text-transform: uppercase;
+            font: 400 16px 'Inter', sans-serif;
+            padding: 16.5px 22px;
+            transition: transform 120ms ease-in-out;
+            box-shadow: -4px 4px 0 0 var(--ink);
+        }
+
+        .btn:hover {
+            transform: translate(7px, -7px);
+        }
+
+        .btn:active {
+            transform: none;
+        }
+
+        .btn.primary {
+            background: var(--blue);
+        }
+
+        /* Card styles following style.md */
+        .card {
+            background: #fff;
+            border: var(--border-w) solid var(--ink);
+            box-shadow: -5px 5px 0 0 var(--ink);
+        }
+
+        /* Input styles following style.md */
+        .input {
+            background: rgba(248, 248, 247, 0.7);
+            border: var(--border-w) solid var(--ink);
+            border-radius: var(--radius);
+            font: 400 16px Inter, sans-serif;
+            padding: 16px 16px;
+        }
+
+        .input:hover,
+        .input:focus {
+            border-color: var(--focus);
+            outline: none;
+        }
+
+        /* Link styles following style.md */
+        .link {
+            font: 400 16px/1.2 Inter, sans-serif;
+        }
+
+        .link span {
+            border-bottom: 0.12em solid var(--ink);
+            padding: 1px 0;
+        }
+
+        .link:hover span {
+            border-bottom-width: calc(0.12em + 1px);
+        }
+
+        /* Label chip styles following style.md */
+        .label-chip {
+            font: 400 18px/1.4 "Space Mono", "Aeonik Mono", monospace;
+            text-transform: uppercase;
+            background: var(--ink);
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: var(--radius);
+        }
+
+        /* Gradient backgrounds for stats */
         .gradient-bg-1 {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
@@ -111,25 +197,36 @@
             position: relative;
             height: 300px;
         }
+
+        /* Enhanced button hover with double shadow */
+        .btn-hover-shadow:hover {
+            transform: translate(6px, -6px);
+            box-shadow: -6px 6px 0 0 var(--ink), -12px 12px 0 0 var(--ink);
+        }
+
+        .btn-hover-shadow:active {
+            transform: none;
+            box-shadow: none;
+        }
     </style>
 </head>
 <body class="min-h-screen">
     <!-- Auth Modal -->
     <div id="authModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white border-2 border-ink card-shadow rounded-md p-6 max-w-md w-full">
+        <div class="card" style="padding: 24px; max-width: 448px;">
             <h2 class="font-mono text-2xl uppercase mb-6">Sign In</h2>
             <form id="authForm" class="space-y-4">
                 <input type="email" id="email" placeholder="Email" required
-                       class="auth-input w-full p-3 font-sans text-base">
+                       class="input w-full">
                 <input type="password" id="password" placeholder="Password" required
-                       class="auth-input w-full p-3 font-sans text-base">
+                       class="input w-full">
                 <button type="submit"
-                        class="w-full bg-blue border-2 border-ink text-ink font-sans text-base uppercase py-3 px-4 rounded-sm transition-transform btn-hover card-shadow-sm">
+                        class="btn primary w-full">
                     Sign In
                 </button>
             </form>
             <div class="mt-4 text-center">
-                <button onclick="showSignUp()" class="text-blue hover:underline">Create Account</button>
+                <button onclick="showSignUp()" class="link"><span>Create Account</span></button>
             </div>
             <div id="authError" class="mt-4 text-red-600 text-sm hidden"></div>
         </div>
@@ -139,22 +236,8 @@
     <header class="max-w-7xl mx-auto px-6 py-8">
         <div class="flex items-center justify-between mb-8">
             <div class="flex items-center gap-3">
-                <div
-                    style="
-                        width: 48px;
-                        height: 48px;
-                        background: #383838;
-                        border: 2px solid #383838;
-                        border-radius: 2px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                    "
-                >
-                    <i
-                        data-lucide="sun"
-                        style="color: #f4efea; width: 24px; height: 24px"
-                    ></i>
+                <div class="card" style="padding: 12px; margin-right: 12px;">
+                    <i data-lucide="sun" style="color: var(--bg); width: 24px; height: 24px"></i>
                 </div>
                 <h1
                     style="
@@ -172,10 +255,10 @@
             <div class="flex items-center gap-4">
                 <div id="userInfo" class="hidden">
                     <span class="text-sm text-muted mr-2" id="userEmail"></span>
-                    <button onclick="signOut()" class="text-sm text-blue hover:underline">Sign Out</button>
+                    <button onclick="signOut()" class="link text-sm"><span>Sign Out</span></button>
                 </div>
                 <button id="signInBtn" onclick="showAuthModal()"
-                        class="bg-ink text-white px-4 py-2 border-2 border-ink rounded-sm font-sans text-sm uppercase">
+                        class="btn">
                     Sign In
                 </button>
             </div>
@@ -205,11 +288,11 @@
         </div>
 
         <!-- Tip Card -->
-        <div class="bg-gradient-to-r from-yellow-100 to-orange-100 border-2 border-yellow rounded-xl p-6 mb-8 shadow-xl">
+        <div class="card" style="padding: 24px; margin-bottom: 32px;">
             <div class="flex items-start gap-3">
-                <i data-lucide="lightbulb" class="text-yellow-600 w-5 h-5 flex-shrink-0 mt-1"></i>
+                <i data-lucide="lightbulb" style="color: var(--yellow); width: 20px; height: 20px; flex-shrink: 0; margin-top: 2px;"></i>
                 <div>
-                    <h3 class="font-mono text-lg uppercase mb-2">Daily Tip</h3>
+                    <div class="label-chip mb-3" style="display: inline-block;">Daily Tip</div>
                     <p id="dailyTip" class="text-sm leading-relaxed"></p>
                 </div>
             </div>
@@ -217,11 +300,11 @@
 
         <!-- 3-Day Habit Tracker (only for logged-in users) -->
         <div id="loggedInSection" class="hidden space-y-6">
-            <div class="bg-gradient-to-r from-blue-500/10 to-teal-500/10 border-2 border-blue rounded-xl p-6 shadow-xl">
-                <h3 class="font-mono text-xl uppercase mb-6 flex items-center gap-2">
-                    <i data-lucide="target" class="w-5 h-5 text-blue"></i>
+            <div class="card" style="padding: 24px;">
+                <div class="label-chip mb-6 flex items-center gap-2">
+                    <i data-lucide="target" style="width: 20px; height: 20px;"></i>
                     Recent Progress Tracker
-                </h3>
+                </div>
                 <div id="recentHabits" class="space-y-6">
                     <!-- Recent habits will be loaded here -->
                 </div>
@@ -231,11 +314,11 @@
         <!-- Analytics Dashboard (always visible, space-efficient with charts) -->
         <div class="space-y-6">
             <!-- Weekly Overview -->
-            <div class="bg-white rounded-xl p-6 shadow-xl border border-gray-200">
-                <h3 class="font-mono text-xl uppercase mb-6 flex items-center gap-2 text-purple-600">
-                    <i data-lucide="trending-up" class="w-5 h-5"></i>
+            <div class="card" style="padding: 24px;">
+                <div class="label-chip mb-6 flex items-center gap-2">
+                    <i data-lucide="trending-up" style="width: 20px; height: 20px;"></i>
                     Weekly Overview
-                </h3>
+                </div>
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                     <div class="chart-container">
                         <canvas id="weeklyChart"></canvas>
@@ -245,31 +328,31 @@
                     </div>
                 </div>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div class="bg-green-50 rounded-lg p-4 text-center border-2 border-green-200">
-                        <div class="text-2xl font-bold text-green-600 mb-1" id="weekBestDay">-</div>
-                        <div class="text-xs text-green-700 uppercase font-medium">Best Day</div>
+                    <div class="card" style="padding: 16px; text-align: center; background: #f4f4f4;">
+                        <div class="text-2xl font-bold" style="color: var(--ink); margin-bottom: 4px;" id="weekBestDay">-</div>
+                        <div class="text-xs uppercase font-medium" style="color: var(--muted);">Best Day</div>
                     </div>
-                    <div class="bg-blue-50 rounded-lg p-4 text-center border-2 border-blue-200">
-                        <div class="text-2xl font-bold text-blue-600 mb-1" id="weekAvgScore">0%</div>
-                        <div class="text-xs text-blue-700 uppercase font-medium">Week Avg</div>
+                    <div class="card" style="padding: 16px; text-align: center; background: #f4f4f4;">
+                        <div class="text-2xl font-bold" style="color: var(--ink); margin-bottom: 4px;" id="weekAvgScore">0%</div>
+                        <div class="text-xs uppercase font-medium" style="color: var(--muted);">Week Avg</div>
                     </div>
-                    <div class="bg-purple-50 rounded-lg p-4 text-center border-2 border-purple-200">
-                        <div class="text-2xl font-bold text-purple-600 mb-1" id="weekTotalCompleted">0</div>
-                        <div class="text-xs text-purple-700 uppercase font-medium">Total Done</div>
+                    <div class="card" style="padding: 16px; text-align: center; background: #f4f4f4;">
+                        <div class="text-2xl font-bold" style="color: var(--ink); margin-bottom: 4px;" id="weekTotalCompleted">0</div>
+                        <div class="text-xs uppercase font-medium" style="color: var(--muted);">Total Done</div>
                     </div>
-                    <div class="bg-pink-50 rounded-lg p-4 text-center border-2 border-pink-200">
-                        <div class="text-2xl font-bold text-pink-600 mb-1" id="weekStreakMini">0</div>
-                        <div class="text-xs text-pink-700 uppercase font-medium">Current Streak</div>
+                    <div class="card" style="padding: 16px; text-align: center; background: #f4f4f4;">
+                        <div class="text-2xl font-bold" style="color: var(--ink); margin-bottom: 4px;" id="weekStreakMini">0</div>
+                        <div class="text-xs uppercase font-medium" style="color: var(--muted);">Current Streak</div>
                     </div>
                 </div>
             </div>
 
             <!-- Monthly Insights -->
-            <div class="bg-white rounded-xl p-6 shadow-xl border border-gray-200">
-                <h3 class="font-mono text-xl uppercase mb-6 flex items-center gap-2 text-orange-600">
-                    <i data-lucide="calendar" class="w-5 h-5"></i>
+            <div class="card" style="padding: 24px;">
+                <div class="label-chip mb-6 flex items-center gap-2">
+                    <i data-lucide="calendar" style="width: 20px; height: 20px;"></i>
                     Monthly Insights
-                </h3>
+                </div>
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div class="lg:col-span-2">
                         <div class="chart-container">
@@ -277,28 +360,28 @@
                         </div>
                     </div>
                     <div class="space-y-4">
-                        <div class="bg-teal-50 rounded-lg p-4 border-2 border-teal-200">
-                            <div class="text-3xl font-bold text-teal-600 mb-1" id="monthAvgScore">0%</div>
-                            <div class="text-sm text-teal-700 font-medium">Monthly Average</div>
+                        <div class="card" style="padding: 16px; background: #f4f4f4;">
+                            <div class="text-3xl font-bold" style="color: var(--ink); margin-bottom: 4px;" id="monthAvgScore">0%</div>
+                            <div class="text-sm font-medium" style="color: var(--muted);">Monthly Average</div>
                         </div>
-                        <div class="bg-yellow-50 rounded-lg p-4 border-2 border-yellow-200">
-                            <div class="text-3xl font-bold text-yellow-600 mb-1" id="monthPerfectDays">0</div>
-                            <div class="text-sm text-yellow-700 font-medium">Perfect Days</div>
+                        <div class="card" style="padding: 16px; background: #f4f4f4;">
+                            <div class="text-3xl font-bold" style="color: var(--ink); margin-bottom: 4px;" id="monthPerfectDays">0</div>
+                            <div class="text-sm font-medium" style="color: var(--muted);">Perfect Days</div>
                         </div>
-                        <div class="bg-red-50 rounded-lg p-4 border-2 border-red-200">
-                            <div class="text-3xl font-bold text-red-600 mb-1" id="monthBestStreak">0</div>
-                            <div class="text-sm text-red-700 font-medium">Best Streak</div>
+                        <div class="card" style="padding: 16px; background: #f4f4f4;">
+                            <div class="text-3xl font-bold" style="color: var(--ink); margin-bottom: 4px;" id="monthBestStreak">0</div>
+                            <div class="text-sm font-medium" style="color: var(--muted);">Best Streak</div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Habit Performance Matrix -->
-            <div class="bg-white rounded-xl p-6 shadow-xl border border-gray-200">
-                <h3 class="font-mono text-xl uppercase mb-6 flex items-center gap-2 text-indigo-600">
-                    <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+            <div class="card" style="padding: 24px;">
+                <div class="label-chip mb-6 flex items-center gap-2">
+                    <i data-lucide="bar-chart-3" style="width: 20px; height: 20px;"></i>
                     Habit Performance Matrix
-                </h3>
+                </div>
                 <div class="chart-container" style="height: 400px;">
                     <canvas id="habitMatrixChart"></canvas>
                 </div>
@@ -350,18 +433,18 @@
 
         // Daily Tips
         const dailyTips = [
-            "Consistency beats intensity. Small daily actions compound into remarkable results.",
-            "Morning light exposure sets your circadian rhythm for the entire day.",
-            "Exercise before 7 AM maximizes hormone benefits and energy throughout the day.",
-            "Your eating window should align with daylight hours for optimal metabolic health.",
-            "Creative work in the evening allows your logical brain to rest while your intuition flourishes.",
-            "Guitar practice isn't just about music—it's a meditation that rewires your neural pathways.",
-            "Voice journaling releases mental load and improves sleep quality.",
-            "The 4s inhale, 6-8s exhale breathing pattern activates your parasympathetic nervous system.",
-            "Weekend late nights are fine if you prioritize recovery the next day.",
-            "Environment design is more powerful than willpower. Set up your space for success.",
-            "Identity-based habits last longer than goal-based habits. You're becoming someone who lives rhythmically.",
-            "Sleep is not a luxury—it's the foundation of all performance and health metrics."
+            "Small daily actions compound into remarkable results.",
+            "Morning light sets your circadian rhythm for the entire day.",
+            "Exercise before 7 AM boosts hormones and energy all day.",
+            "Align your eating window with daylight hours.",
+            "Evening creativity: let intuition guide you.",
+            "Guitar practice is meditation that rewires your brain.",
+            "Voice journaling clears the mind for better sleep.",
+            "Breathe: 4s in, 6-8s out to activate calm.",
+            "Late nights are fine—prioritize recovery tomorrow.",
+            "Design your environment better than your willpower.",
+            "Build identity-based habits, not goal-based ones.",
+            "Sleep is the foundation of performance."
         ];
 
         // Initialize
@@ -594,46 +677,47 @@
                 const borderColor = isToday ? 'border-blue-300' : 'border-gray-300';
 
                 return `
-                    <div class="bg-gradient-to-br ${bgColor} rounded-xl p-5 border-2 ${borderColor} shadow-lg ${isToday ? 'ring-2 ring-blue-400 ring-opacity-50' : ''}">
+                    <div class="card" style="padding: 20px; ${isToday ? 'box-shadow: -6px 6px 0 0 var(--ink);' : ''}">
                         <div class="flex items-center justify-between mb-4">
                             <div>
-                                <h4 class="font-mono text-lg uppercase text-gray-800">${dateInfo.label}</h4>
-                                ${dateInfo.isToday ? '<span class="text-sm text-blue-600 font-medium">Today</span>' : ''}
+                                <h4 class="font-mono text-lg uppercase">${dateInfo.label}</h4>
+                                ${dateInfo.isToday ? '<span class="text-sm" style="color: var(--blue);">Today</span>' : ''}
                             </div>
                             <div class="text-right">
-                                <div class="text-2xl font-bold ${completionRate === 100 ? 'text-green-600' : completionRate >= 80 ? 'text-blue-600' : 'text-gray-600'}">${completionRate}%</div>
-                                <div class="text-xs text-gray-500">Complete</div>
+                                <div class="text-2xl font-bold" style="${completionRate === 100 ? 'color: #22c55e;' : completionRate >= 80 ? 'color: var(--blue);' : 'color: var(--muted);'}">${completionRate}%</div>
+                                <div class="text-xs" style="color: var(--muted);">Complete</div>
                             </div>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
                             ${habitsConfig.map(habit => {
                                 const isChecked = dayData.habits[habit.id] || false;
-                                const checkColor = isChecked ? 'bg-green-100 border-green-300' : 'bg-white border-gray-300';
-                                const iconColor = isChecked ? 'text-green-600' : 'text-gray-400';
 
                                 return `
-                                    <div class="flex items-center gap-3 p-3 border-2 rounded-lg ${checkColor} hover:shadow-md transition-shadow">
-                                        <i data-lucide="${habit.icon}" class="w-4 h-4 ${iconColor} flex-shrink-0"></i>
-                                        <div class="flex-1 min-w-0">
-                                            <div class="text-sm font-medium text-gray-800">${habit.name}</div>
-                                            <div class="text-xs text-gray-500">${habit.time}</div>
+                                    <div class="card" style="padding: 12px; ${isChecked ? 'background: #f0fdf4;' : ''}">
+                                        <div class="flex items-center gap-3">
+                                            <i data-lucide="${habit.icon}" style="width: 16px; height: 16px; color: ${isChecked ? '#22c55e' : 'var(--muted)'}; flex-shrink: 0;"></i>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="text-sm font-medium">${habit.name}</div>
+                                                <div class="text-xs" style="color: var(--muted);">${habit.time}</div>
+                                            </div>
+                                            <input type="checkbox"
+                                                   class="habit-checkbox"
+                                                   ${isChecked ? 'checked' : ''}
+                                                   onchange="toggleHabit('${dayKey}', '${habit.id}')">
                                         </div>
-                                        <input type="checkbox"
-                                               class="habit-checkbox"
-                                               ${isChecked ? 'checked' : ''}
-                                               onchange="toggleHabit('${dayKey}', '${habit.id}')">
                                     </div>
                                 `;
                             }).join('')}
                         </div>
 
                         <div>
-                            <label class="text-sm font-medium text-gray-700 mb-2 block">Daily Notes:</label>
+                            <label class="text-sm font-medium mb-2 block" style="color: var(--ink);">Daily Notes:</label>
                             <textarea
                                 id="notes-${dayKey}"
                                 placeholder="How did you feel today? Sleep quality, energy levels, insights..."
-                                class="w-full h-20 auth-input p-3 text-sm resize-none rounded-lg"
+                                class="input w-full"
+                                style="height: 80px; resize: none;"
                                 oninput="updateNotes('${dayKey}', this.value)"
                             >${dayData.notes || ''}</textarea>
                         </div>
