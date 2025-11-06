@@ -583,6 +583,19 @@
         </div>
       </div>
 
+      <!-- Logbook: daily notes + summary (visible signed in/out) -->
+      <div class="space-y-6">
+        <div class="card" style="padding: 24px">
+          <div class="label-chip mb-6 flex items-center gap-2">
+            <i data-lucide="book-open" style="width: 20px; height: 20px"></i>
+            Logbook
+          </div>
+          <div id="logbookList" class="space-y-4">
+            <!-- Logbook entries render here -->
+          </div>
+        </div>
+      </div>
+
       <!-- Analytics Dashboard (always visible, space-efficient with charts) -->
       <div class="space-y-6">
         <!-- Weekly Overview -->
@@ -1307,6 +1320,75 @@
         autoSave();
       }
 
+      // Render Logbook: list all days with notes and a summary of done/missed
+      function renderLogbook() {
+        const container = document.getElementById('logbookList');
+        if (!container) return;
+
+        // Collect entries with non-empty notes
+        const entries = Object.entries(habitsData)
+          .filter(([_, data]) => data && (data.notes || '').trim().length > 0)
+          .map(([key, data]) => ({ key, data, date: getDateFromKey(key) }))
+          .sort((a, b) => b.date - a.date); // newest first
+
+        if (entries.length === 0) {
+          container.innerHTML = `
+            <div class="text-sm" style="color: var(--muted);">No notes yet. Add a note in the Recent Progress Tracker.</div>
+          `;
+          return;
+        }
+
+        const html = entries.map(({ key, data, date }) => {
+          const dateLabel = getDateString(date);
+          const total = data.total || habitsConfig.length;
+          const doneIds = new Set(Object.entries(data.habits || {}).filter(([, v]) => !!v).map(([id]) => id));
+          const done = habitsConfig.filter(h => doneIds.has(h.id)).map(h => h.name);
+          const missed = habitsConfig.filter(h => !doneIds.has(h.id)).map(h => h.name);
+          const doneCount = done.length;
+          const missedCount = Math.max(0, total - doneCount);
+
+          const doneList = done.length ? done.join(', ') : '—';
+          const missedList = missed.length ? missed.join(', ') : '—';
+
+          return `
+            <div class="card" style="padding: 16px; background: #f9fafb;">
+              <div class="flex items-start justify-between mb-3">
+                <div>
+                  <div class="font-mono uppercase">${dateLabel}</div>
+                  <div class="text-xs" style="color: var(--muted);">${doneCount}/${total} done</div>
+                </div>
+                <div class="flex items-center gap-3 text-xs" style="color: var(--muted);">
+                  <div class="flex items-center gap-1"><i data-lucide="check" class="w-4 h-4"></i>${doneCount}</div>
+                  <div class="flex items-center gap-1"><i data-lucide="x" class="w-4 h-4"></i>${missedCount}</div>
+                </div>
+              </div>
+              <div class="card" style="padding: 12px; background: #fff;">
+                <div class="text-sm" style="white-space: pre-wrap;">${(data.notes || '').replace(/</g, '&lt;')}</div>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                <div class="card" style="padding: 12px; background: #fff;">
+                  <div class="flex items-center gap-2 mb-1">
+                    <i data-lucide="check-circle" style="width: 16px; height: 16px; color: #16a34a;"></i>
+                    <div class="text-xs uppercase font-medium" style="color: var(--muted);">Done</div>
+                  </div>
+                  <div class="text-sm">${doneList}</div>
+                </div>
+                <div class="card" style="padding: 12px; background: #fff;">
+                  <div class="flex items-center gap-2 mb-1">
+                    <i data-lucide="circle-off" style="width: 16px; height: 16px; color: #9ca3af;"></i>
+                    <div class="text-xs uppercase font-medium" style="color: var(--muted);">Missed</div>
+                  </div>
+                  <div class="text-sm">${missedList}</div>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        container.innerHTML = html;
+        lucide.createIcons({ attrs: { 'stroke-width': 1.5 } });
+      }
+
       // Habit Toggle
       async function toggleHabit(dayKey, habitId) {
         if (!currentUser) return; // Only logged-in users can edit
@@ -1364,6 +1446,7 @@
       function renderAllViews() {
         // Always render; when signed out, it's demo data (read-only)
         renderRecentHabits();
+        renderLogbook();
         renderCharts();
         updateStats();
       }
