@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Weekly Habit Tracker</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Tailwind (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Mavo -->
+    <link rel="stylesheet" href="https://get.mavo.io/mavo.css" />
+    <script src="https://get.mavo.io/mavo.js"></script>
+    <!-- Google Sheets plugin will be auto-loaded via mv-plugins="gsheets" -->
+
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+  </head>
+  <body
+    class="min-h-screen antialiased"
+    style="
+      background: #f4efea;
+      color: #383838;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica,
+        Arial, sans-serif;
+      letter-spacing: 0.02em;
+    "
+  >
+    <!-- App Root (custom toolbar; Mavo bar hidden) -->
+    <main
+      mv-app="habits"
+      mv-bar="none"
+      mv-plugins="gsheets"
+      mv-storage="https://docs.google.com/spreadsheets/d/1Myh4hNzs3unZy1cItmJMEOe_3ax0_uMjbhokiO2uZx8/edit"
+      mv-storage-sheet="Week"
+      mv-storage-options="transformHeadings"
+      class="mx-auto max-w-7xl px-6 py-8 md:py-12"
+    >
+      <!-- Header / App Bar -->
+      <header class="flex items-center justify-between gap-4">
+        <!-- Logo: letters only, tight tracking -->
+        <div class="flex items-center gap-3">
+          <div
+            class="flex items-center justify-center"
+            style="
+              width: 44px;
+              height: 44px;
+              border: 2px solid #383838;
+              border-radius: 2px;
+              background: #ffffff;
+              box-shadow: -6px 6px 0 0 #383838;
+            "
+          >
+            <span
+              class="select-none"
+              style="
+                font-family: 'Space Mono', monospace;
+                font-size: 18px;
+                letter-spacing: -0.02em;
+              "
+              >HH</span
+            >
+          </div>
+          <div
+            class="uppercase"
+            style="
+              font-family: 'Space Mono', monospace;
+              font-size: 20px;
+              letter-spacing: -0.02em;
+            "
+          >
+            Habit Tracker
+          </div>
+        </div>
+
+        <!-- Toolbar (custom Mavo controls + auth state) -->
+        <div class="flex items-center gap-3">
+          <div
+            id="auth-pill"
+            class="hidden md:flex items-center gap-2"
+            style="
+              border-radius: 2px;
+              border: 2px solid #383838;
+              background: #ffffff;
+              color: #383838;
+              font-size: 12px;
+              padding: 8px 10px;
+            "
+          >
+            <i data-lucide="user" style="width: 16px; height: 16px"></i>
+            <span>Signed out</span>
+          </div>
+
+          <button
+            mv-action="edit"
+            class="inline-flex items-center gap-2 transition-transform"
+            style="
+              border: 2px solid #383838;
+              border-radius: 2px;
+              background: #f4efea;
+              color: #383838;
+              font-weight: 500;
+              font-size: 14px;
+              padding: 12px 14px;
+            "
+          >
+            <i data-lucide="pencil" style="width: 18px; height: 18px"></i>
+            <span class="uppercase">Edit</span>
+          </button>
+          <button
+            id="btn-save"
+            mv-action="save"
+            class="inline-flex items-center gap-2 transition-transform hover:-translate-y-1 hover:translate-x-1"
+            style="
+              border: 2px solid #383838;
+              border-radius: 2px;
+              background: #6fc2ff;
+              color: #383838;
+              font-weight: 500;
+              font-size: 14px;
+              padding: 12px 14px;
+              box-shadow: -6px 6px 0 0 #383838;
+            "
+          >
+            <i data-lucide="save" style="width: 18px; height: 18px"></i>
+            <span class="uppercase">Save</span>
+          </button>
+          <button
+            id="btn-login"
+            mv-action="login"
+            class="inline-flex items-center gap-2 transition-transform"
+            style="
+              border: 2px solid #383838;
+              border-radius: 2px;
+              background: #ffffff;
+              color: #383838;
+              font-weight: 500;
+              font-size: 14px;
+              padding: 12px 14px;
+            "
+          >
+            <i data-lucide="log-in" style="width: 18px; height: 18px"></i>
+            <span class="uppercase">Login</span>
+          </button>
+          <button
+            id="btn-logout"
+            mv-action="logout"
+            class="hidden md:inline-flex items-center gap-2 transition-transform"
+            style="
+              border: 2px solid #383838;
+              border-radius: 2px;
+              background: #ffffff;
+              color: #383838;
+              font-weight: 500;
+              font-size: 14px;
+              padding: 12px 14px;
+            "
+          >
+            <i data-lucide="log-out" style="width: 18px; height: 18px"></i>
+            <span class="uppercase">Logout</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Divider -->
+      <div
+        class="my-6"
+        style="height: 2px; background: #383838; opacity: 0.15"
+      ></div>
+
+      <!-- Auth help (visible when signed out) -->
+      <div
+        id="auth-help"
+        class="flex items-center gap-2 mb-6"
+        style="
+          display: none;
+          border-radius: 2px;
+          border: 2px solid #383838;
+          background: #fffbea;
+          color: #383838;
+          padding: 10px 12px;
+        "
+      >
+        <i data-lucide="alert-circle" style="width: 18px; height: 18px"></i>
+        <p class="text-sm" style="font-weight: 300">
+          Please log in to use this. Enable pop‑ups and allow third‑party
+          cookies for Google sign‑in. After logging in, your data syncs to the
+          connected Google Sheet.
+        </p>
+      </div>
+
+      <!-- Sign-in blocker overlay -->
+      <div
+        id="signin-overlay"
+        class="fixed inset-0 z-40"
+        style="
+          display: none;
+          background: rgba(244, 239, 234, 0.75);
+          backdrop-filter: saturate(120%) blur(2px);
+        "
+      >
+        <div class="mx-auto max-w-lg px-6" style="margin-top: 10vh">
+          <div
+            style="
+              border: 2px solid #383838;
+              border-radius: 2px;
+              background: #ffffff;
+              box-shadow: -8px 8px 0 0 #383838;
+            "
+          >
+            <div class="p-6 md:p-8">
+              <div
+                class="inline-block"
+                style="
+                  font-family: 'Space Mono', monospace;
+                  text-transform: uppercase;
+                  font-size: 14px;
+                  background: #383838;
+                  color: #ffffff;
+                  padding: 6px 10px;
+                  border-radius: 2px;
+                "
+              >
+                Sign in Required
+              </div>
+              <h2
+                class="mt-3"
+                style="
+                  font-size: 26px;
+                  letter-spacing: -0.02em;
+                  line-height: 1.2;
+                  text-transform: uppercase;
+                  font-weight: 500;
+                "
+              >
+                Please log in to use the tracker
+              </h2>
+              <p class="mt-2 text-sm" style="font-weight: 300">
+                We securely store your week in a Google Sheet you control so you
+                can view and share it anywhere.
+              </p>
+              <div class="mt-5 flex items-center gap-3">
+                <button
+                  id="overlay-login"
+                  mv-action="login"
+                  class="inline-flex items-center gap-2 transition-transform hover:-translate-y-1 hover:translate-x-1"
+                  style="
+                    border: 2px solid #383838;
+                    border-radius: 2px;
+                    background: #6fc2ff;
+                    color: #383838;
+                    font-weight: 500;
+                    font-size: 14px;
+                    padding: 12px 14px;
+                    box-shadow: -6px 6px 0 0 #383838;
+                  "
+                >
+                  <i data-lucide="log-in" style="width: 18px; height: 18px"></i>
+                  <span class="uppercase">Login with Google</span>
+                </button>
+                <button
+                  id="overlay-close"
+                  class="inline-flex items-center gap-2"
+                  style="
+                    border: 2px solid #383838;
+                    border-radius: 2px;
+                    background: #ffffff;
+                    color: #383838;
+                    font-weight: 500;
+                    font-size: 14px;
+                    padding: 12px 14px;
+                  "
+                >
+                  <i data-lucide="x" style="width: 18px; height: 18px"></i>
+                  <span class="uppercase">Close</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Meta / Overview -->
+      <section class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+        <div
+          class="col-span-1 md:col-span-2"
+          style="
+            border: 2px solid #383838;
+            border-radius: 2px;
+            background: #ffffff;
+            box-shadow: -8px 8px 0 0 #383838;
+          "
+        >
+          <div class="p-5 md:p-6 flex items-center justify-between gap-4">
+            <div>
+              <div
+                class="inline-block"
+                style="
+                  font-family: 'Space Mono', monospace;
+                  text-transform: uppercase;
+                  font-size: 14px;
+                  background: #383838;
+                  color: #ffffff;
+                  padding: 6px 10px;
+                  border-radius: 2px;
+                "
+              >
+                Weekly Overview
+              </div>
+              <h1
+                class="mt-3 md:mt-4"
+                style="
+                  font-size: 32px;
+                  line-height: 1.2;
+                  letter-spacing: -0.02em;
+                  text-transform: uppercase;
+                  font-weight: 500;
+                "
+              >
+                Consistency Over Perfection
+              </h1>
+              <p class="mt-2 text-sm md:text-base" style="font-weight: 300">
+                Track morning light, movement, meals, and wind‑down rituals.
+                Save to your repo for a simple weekly loop.
+              </p>
+            </div>
+            <div
+              class="hidden md:flex items-center justify-center"
+              style="
+                width: 120px;
+                height: 120px;
+                border: 2px solid #383838;
+                border-radius: 2px;
+                background: #ffde00;
+                box-shadow: -6px 6px 0 0 #383838;
+              "
+            >
+              <i
+                data-lucide="calendar-check"
+                style="width: 56px; height: 56px"
+              ></i>
+            </div>
+          </div>
+          <div
+            class="grid grid-cols-2 md:grid-cols-4 gap-4 p-5 pt-0 md:px-6 md:pb-6"
+          >
+            <div
+              class="p-3"
+              style="border: 2px solid #383838; border-radius: 2px; background: #ffffff"
+            >
+              <div
+                class="uppercase"
+                style="font-family: 'Space Mono', monospace; font-size: 12px"
+              >
+                Completed
+              </div>
+              <div
+                class="mt-1"
+                style="font-size: 22px; letter-spacing: -0.02em"
+              >
+                [sum(day.morningLight + day.workout + day.walk + day.fastingMet
+                + day.guitar + day.stretch + day.journal)] / [count(day) * 7]
+              </div>
+            </div>
+            <div
+              class="p-3"
+              style="border: 2px solid #383838; border-radius: 2px; background: #ffffff"
+            >
+              <div
+                class="uppercase"
+                style="font-family: 'Space Mono', monospace; font-size: 12px"
+              >
+                Days
+              </div>
+              <div
+                class="mt-1"
+                style="font-size: 22px; letter-spacing: -0.02em"
+              >
+                [count(day)]
+              </div>
+            </div>
+            <div
+              class="p-3"
+              style="border: 2px solid #383838; border-radius: 2px; background: #ffffff"
+            >
+              <div
+                class="uppercase"
+                style="font-family: 'Space Mono', monospace; font-size: 12px"
+              >
+                Start
+              </div>
+              <div class="mt-1" style="font-size: 16px">[weekStart]</div>
+            </div>
+            <div
+              class="p-3"
+              style="border: 2px solid #383838; border-radius: 2px; background: #ffffff"
+            >
+              <div
+                class="uppercase"
+                style="font-family: 'Space Mono', monospace; font-size: 12px"
+              >
+                Target/Day
+              </div>
+              <div
+                class="mt-1"
+                style="font-size: 22px; letter-spacing: -0.02em"
+              >
+                7
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="col-span-1 flex flex-col gap-3"
+          style="
+            border: 2px solid #383838;
+            border-radius: 2px;
+            background: rgba(248, 248, 247, 0.7);
+            box-shadow: -8px 8px 0 0 #383838;
+          "
+        >
+          <div class="p-5 md:p-6">
+            <div
+              class="uppercase"
+              style="font-family: 'Space Mono', monospace; font-size: 12px"
+            >
+              Week
+            </div>
+            <input
+              property="weekStart"
+              type="date"
+              class="mt-2 w-full focus:outline-none"
+              style="
+                background: #ffffff;
+                border: 2px solid #383838;
+                border-radius: 2px;
+                padding: 12px 12px;
+                font-size: 14px;
+              "
+            />
+            <div class="mt-3 text-sm" style="font-weight: 300">
+              Adjust the start date, then mark your habits below. Save when
+              done.
+            </div>
+          </div>
+          <div class="px-5 pb-5 md:px-6 md:pb-6 grid grid-cols-2 gap-3">
+            <button
+              mv-action="set(day.morningLight = 0, day.workout = 0, day.walk = 0, day.fastingMet = 0, day.guitar = 0, day.stretch = 0, day.journal = 0, day.socialNight = 0)"
+              class="inline-flex items-center justify-center gap-2 transition-transform hover:-translate-y-1 hover:translate-x-1"
+              style="
+                border: 2px solid #383838;
+                border-radius: 2px;
+                background: #ffffff;
+                color: #383838;
+                font-weight: 500;
+                font-size: 14px;
+                padding: 12px 14px;
+                box-shadow: -6px 6px 0 0 #383838;
+              "
+            >
+              <i data-lucide="rotate-ccw" style="width: 18px; height: 18px"></i>
+              <span class="uppercase">Reset Week</span>
+            </button>
+            <a
+              id="open-sheet"
+              href="#"
+              target="_blank"
+              rel="noopener"
+              class="inline-flex items-center justify-center gap-2 transition-transform hover:-translate-y-1 hover:translate-x-1"
+              style="
+                border: 2px solid #383838;
+                border-radius: 2px;
+                background: #6fc2ff;
+                color: #383838;
+                font-weight: 500;
+                font-size: 14px;
+                padding: 12px 14px;
+                box-shadow: -6px 6px 0 0 #383838;
+              "
+            >
+              <i data-lucide="table" style="width: 18px; height: 18px"></i>
+              <span class="uppercase">Open Sheet</span>
+            </a>
+            <button
+              id="download-csv"
+              class="inline-flex items-center justify-center gap-2 transition-transform"
+              style="
+                border: 2px solid #383838;
+                border-radius: 2px;
+                background: #ffffff;
+                color: #383838;
+                font-weight: 500;
+                font-size: 14px;
+                padding: 12px 14px;
+              "
+            >
+              <i data-lucide="download" style="width: 18px; height: 18px"></i>
+              <span class="uppercase">CSV Template</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Days Grid -->
+      <section class="mt-8 md:mt-12">
+        <div class="flex items-center justify-between">
+          <div
+            class="inline-block"
+            style="
+              font-family: 'Space Mono', monospace;
+              text-transform: uppercase;
+              font-size: 14px;
+              background: #383838;
+              color: #ffffff;
+              padding: 6px 10px;
+              border-radius: 2px;
+            "
+          >
+            Daily Checklist
+          </div>
+        </div>
+
+        <div
+          class="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
+        >
+          <div mv-list property="day" class="contents" mv-item-bar="none">
+            <!-- Day Card Template (repeat 7 times pre-seeded) -->
+            <article
+              mv-list-item
+              class="flex flex-col"
+              style="
+                border: 2px solid #383838;
+                border-radius: 2px;
+                background: #ffffff;
+                box-shadow: -8px 8px 0 0 #383838;
+              "
+            >
+              <div
+                class="p-5 flex items-center justify-between gap-3"
+                style="border-bottom: 2px solid #383838"
+              >
+                <div class="flex items-center gap-3">
+                  <div
+                    class="inline-block"
+                    style="
+                      font-family: 'Space Mono', monospace;
+                      text-transform: uppercase;
+                      font-size: 12px;
+                      background: #383838;
+                      color: #ffffff;
+                      padding: 6px 10px;
+                      border-radius: 2px;
+                    "
+                  >
+                    [name]
+                  </div>
+                  <input property="name" class="hidden" />
+                </div>
+                <input
+                  property="date"
+                  type="date"
+                  class="focus:outline-none"
+                  style="
+                    background: #ffffff;
+                    border: 2px solid #383838;
+                    border-radius: 2px;
+                    padding: 6px 8px;
+                    font-size: 12px;
+                  "
+                />
+              </div>
+
+              <!-- Habits List -->
+              <div class="p-5 grid grid-cols-1 gap-3">
+                <!-- Toggle helper: a square with optional check icon; clicking anywhere toggles the boolean -->
+
+                <!-- Morning Light -->
+                <button
+                  mv-action="set(morningLight = !morningLight)"
+                  class="w-full flex items-center justify-between gap-4 text-left transition-colors"
+                  style="
+                    border: 2px solid #383838;
+                    border-radius: 2px;
+                    background: #ffffff;
+                    padding: 10px 12px;
+                  "
+                >
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="flex items-center justify-center"
+                      style="
+                        width: 22px;
+                        height: 22px;
+                        border: 2px solid #383838;
+                        border-radius: 2px;
+                        background: #ffffff;
+                      "
+                    >
+                      <i
+                        data-lucide="check"
+                        mv-if="morningLight"
+                        style="width: 16px; height: 16px"
+                      ></i>
+                    </div>
+                    <span style="font-size: 14px">Morning Light</span>
+                  </div>
+                </button>
+                <input property="morningLight" type="checkbox" class="hidden" />
+
+                <!-- Workout -->
+                <button
+                  mv-action="set(workout = !workout)"
+                  class="w-full flex items-center justify-between gap-4 text-left transition-colors"
+                  style="
+                    border: 2px solid #383838;
+                    border-radius: 2px;
+                    background: #ffffff;
+                    padding: 10px 12px;
+                  "
+                >
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="flex items-center justify-center"
+                      style="
+                        width: 22px;
+                        height: 22px;
+                        border: 2px solid #383838;
+                        border-radius: 2px;
+                        background: #ffffff;
+                      "
+                    >
+                      <i
+                        data-lucide="check"
+                        mv-if="workout"
+                        style="width: 16px; height: 16px"
+                      ></i>
+                    </div>
+                    <span style="font-size: 14px">Exercise</span>
+                  </div>
+                </button>
+                <input property="workout" type="checkbox" class="hidden" />
+
+                <!-- Walk -->
+                <button
+                  mv-action="set(walk = !walk)"
+                  class="w-full flex items-center justify-between gap-4 text-left transition-colors"
+                  style="
+                    border: 2px solid #383838;
+                    border-radius: 2px;
+                    background: #ffffff;
+                    padding: 10px 12px;
+                  "
+                >
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="flex items-center justify-center"
+                      style="
+                        width: 22px;
+                        height: 22px;
+                        border: 2px solid #383838;
+                        border-radius: 2px;
+                        background: #ffffff;
+                      "
+                    >
+                      <i
+                        data-lucide="check"
+                        mv-if="walk"
+                        style="width: 16px; height: 16px"
+                      ></i>
+                    </div>
+                    <span style="font-size: 14px">Walk</span>
+                  </div>
+                </button>
+                <input property="walk" type="checkbox" class="hidden" />
+
+                <!-- Fasting Window Met -->
+                <button
+                  mv-action="set(fastingMet = !fastingMet)"
+                  class="w-full flex items-center justify-between gap-4 text-left transition-colors"
+                  style="
+                    border: 2px solid #383838;
+                    border-radius: 2px;
+                    background: #ffffff;
+                    padding: 10px 12px;
+                  "
+                >
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="flex items-center justify-center"
+                      style="
+                        width: 22px;
+                        height: 22px;
+                        border: 2px solid #383838;
+                        border-radius: 2px;
+                        background: #ffffff;
+                      "
+                    >
+                      <i
+                        data-lucide="check"
+                        mv-if="fastingMet"
+                        style="width: 16px; height: 16px"
+                      ></i>
+                    </div>
+                    <span style="font-size: 14px">Meals in Window</span>
+                  </div>
+                </button>
+                <input property="fastingMet" type="checkbox" class="hidden" />
+
+                <!-- Guitar -->
+                <button
+                  mv-action="set(guitar = !guitar)"
+                  class="w-full flex items-center justify-between gap-4 text-left transition-colors"
+                  style="
+                    border: 2px solid #383838;
+                    border-radius: 2px;
+                    background: #ffffff;
+                    padding: 10px 12px;
+                  "
+                >
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="flex items-center justify-center"
+                      style="
+                        width: 22px;
+                        height: 22px;
+                        border: 2px solid #383838;
+                        border-radius: 2px;
+                        background: #ffffff;
+                      "
+                    >
+                      <i
+                        data-lucide="check"
+                        mv-if="guitar"
+                        style="width: 16px; height: 16px"
+                      ></i>
+                    </div>
+                    <span style="font-size: 14px">Guitar</span>
+                  </div>
+                </button>
+                <input property="guitar" type="checkbox" class="hidden" />
+
+                <!-- Stretch -->
+                <button
+                  mv-action="set(stretch = !stretch)"
+                  class="w-full flex items-center justify-between gap-4 text-left transition-colors"
+                  style="
+                    border: 2px solid #383838;
+                    border-radius: 2px;
+                    background: #ffffff;
+                    padding: 10px 12px;
+                  "
+                >
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="flex items-center justify-center"
+                      style="
+                        width: 22px;
+                        height: 22px;
+                        border: 2px solid #383838;
+                        border-radius: 2px;
+                        background: #ffffff;
+                      "
+                    >
+                      <i
+                        data-lucide="check"
+                        mv-if="stretch"
+                        style="width: 16px; height: 16px"
+                      ></i>
+                    </div>
+                    <span style="font-size: 14px">Stretch</span>
+                  </div>
+                </button>
+                <input property="stretch" type="checkbox" class="hidden" />
+
+                <!-- Journal -->
+                <button
+                  mv-action="set(journal = !journal)"
+                  class="w-full flex items-center justify-between gap-4 text-left transition-colors"
+                  style="
+                    border: 2px solid #383838;
+                    border-radius: 2px;
+                    background: #ffffff;
+                    padding: 10px 12px;
+                  "
+                >
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="flex items-center justify-center"
+                      style="
+                        width: 22px;
+                        height: 22px;
+                        border: 2px solid #383838;
+                        border-radius: 2px;
+                        background: #ffffff;
+                      "
+                    >
+                      <i
+                        data-lucide="check"
+                        mv-if="journal"
+                        style="width: 16px; height: 16px"
+                      ></i>
+                    </div>
+                    <span style="font-size: 14px">Voice Journal</span>
+                  </div>
+                </button>
+                <input property="journal" type="checkbox" class="hidden" />
+
+                <!-- Social Late Night (neutral tracker) -->
+                <button
+                  mv-action="set(socialNight = !socialNight)"
+                  class="w-full flex items-center justify-between gap-4 text-left transition-colors"
+                  style="
+                    border: 2px dashed #383838;
+                    border-radius: 2px;
+                    background: #ffffff;
+                    padding: 10px 12px;
+                  "
+                >
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="flex items-center justify-center"
+                      style="
+                        width: 22px;
+                        height: 22px;
+                        border: 2px solid #383838;
+                        border-radius: 2px;
+                        background: #ffffff;
+                      "
+                    >
+                      <i
+                        data-lucide="moon"
+                        mv-if="socialNight"
+                        style="width: 16px; height: 16px"
+                      ></i>
+                    </div>
+                    <span style="font-size: 14px">Social Late Night</span>
+                  </div>
+                </button>
+                <input property="socialNight" type="checkbox" class="hidden" />
+
+                <!-- Notes -->
+                <div class="mt-1">
+                  <label
+                    class="block"
+                    style="
+                      font-size: 12px;
+                      text-transform: uppercase;
+                      font-family: 'Space Mono', monospace;
+                    "
+                    >Notes</label
+                  >
+                  <textarea
+                    property="notes"
+                    rows="3"
+                    class="w-full focus:outline-none"
+                    style="
+                      margin-top: 6px;
+                      background: rgba(248, 248, 247, 0.7);
+                      border: 2px solid #383838;
+                      border-radius: 2px;
+                      padding: 10px 12px;
+                      font-size: 14px;
+                    "
+                  ></textarea>
+                  <!-- Hidden mapping: copy weekStart into each row so Sheets stores it -->
+                  <input property="weekStart" class="hidden" mv-value="[weekStart]" />
+                </div>
+              </div>
+            </article>
+
+            <!-- Seed 7 items (names default) -->
+            <article mv-list-item class="hidden">
+              <input property="name" value="Monday" class="hidden" />
+            </article>
+            <article mv-list-item class="hidden">
+              <input property="name" value="Tuesday" class="hidden" />
+            </article>
+            <article mv-list-item class="hidden">
+              <input property="name" value="Wednesday" class="hidden" />
+            </article>
+            <article mv-list-item class="hidden">
+              <input property="name" value="Thursday" class="hidden" />
+            </article>
+            <article mv-list-item class="hidden">
+              <input property="name" value="Friday" class="hidden" />
+            </article>
+            <article mv-list-item class="hidden">
+              <input property="name" value="Saturday" class="hidden" />
+            </article>
+            <article mv-list-item class="hidden">
+              <input property="name" value="Sunday" class="hidden" />
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- Footer / Helper Links -->
+      <footer
+        class="mt-12 md:mt-16 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+      >
+        <div class="flex items-center gap-2 text-sm" style="font-weight: 300">
+          <span
+            class="inline-flex items-center justify-center"
+            style="
+              width: 18px;
+              height: 18px;
+              border: 2px solid #383838;
+              border-radius: 2px;
+              background: #ffffff;
+            "
+          >
+            <i data-lucide="check" style="width: 14px; height: 14px"></i>
+          </span>
+          Tap tiles to toggle. Save writes to your Google Sheet.
+        </div>
+        <div class="flex items-center gap-3"></div>
+      </footer>
+    </main>
+
+    <script>
+      // Initialize lucide icons with 1.5 stroke width
+      document.addEventListener("DOMContentLoaded", () => {
+        if (window.lucide && typeof window.lucide.createIcons === "function") {
+          window.lucide.createIcons({ attrs: { "stroke-width": 1.5 } });
+        }
+      });
+
+      // Re-render icons after Mavo updates DOM (load/save/edit)
+      ["mv-load", "mv-save", "mv-change", "mv-edit"].forEach((evt) => {
+        document.addEventListener(evt, () => {
+          if (
+            window.lucide &&
+            typeof window.lucide.createIcons === "function"
+          ) {
+            window.lucide.createIcons({ attrs: { "stroke-width": 1.5 } });
+          }
+        });
+      });
+
+      // Debug Mavo initialization
+      document.addEventListener("mv-load", (e) => {
+        console.log("Mavo loaded", e);
+        const app = getApp();
+        console.log("Mavo app:", app);
+        console.log("Mavo user:", app?.user);
+        console.log("Mavo storage:", app?.storage);
+      });
+
+      // Auth state UI wiring
+      function getApp() {
+        const el = document.querySelector('[mv-app="habits"]');
+        return el ? el.$mv : null;
+      }
+
+      function updateAuthUI() {
+        const app = getApp();
+        const user = app && app.user ? app.user : null;
+        const authed = !!(user && (user.username || user.name));
+
+        const pill = document.getElementById("auth-pill");
+        const loginBtn = document.getElementById("btn-login");
+        const logoutBtn = document.getElementById("btn-logout");
+        const saveBtn = document.getElementById("btn-save");
+        const editBtn = document.querySelector('[mv-action="edit"]');
+        const help = document.getElementById("auth-help");
+        const overlay = document.getElementById("signin-overlay");
+
+        // Show auth pill only when logged in
+        if (pill) {
+          pill.style.display = authed ? "flex" : "none";
+          const span = pill.querySelector("span");
+          if (authed) {
+            span.textContent = `Signed in as ${user.name || user.username}`;
+          }
+        }
+
+        // Show login button only when not logged in
+        if (loginBtn) loginBtn.style.display = authed ? "none" : "inline-flex";
+        if (logoutBtn) logoutBtn.style.display = authed ? "inline-flex" : "none";
+
+        // Edit button always visible, Save button visible in edit mode or when logged in
+        if (editBtn) editBtn.style.display = "inline-flex";
+        if (saveBtn) {
+          const isEditing = app && app.editing;
+          saveBtn.style.display = (isEditing || authed) ? "inline-flex" : "none";
+        }
+
+        // Hide auth help and overlay - data can be viewed without login
+        if (help) help.style.display = "none";
+        if (overlay) overlay.style.display = "none";
+      }
+
+      document.addEventListener("mv-load", updateAuthUI);
+      document.addEventListener("mv-login", updateAuthUI);
+      document.addEventListener("mv-logout", updateAuthUI);
+      document.addEventListener("mv-edit", updateAuthUI);
+      document.addEventListener("mv-save", updateAuthUI);
+
+      // Debug login events
+      document.addEventListener("mv-login", (e) => {
+        console.log("Login event triggered", e);
+      });
+      document.addEventListener("mv-logout", (e) => {
+        console.log("Logout event triggered", e);
+      });
+      document.addEventListener("DOMContentLoaded", () => {
+        // Attempt initial state update once Mavo attaches
+        const tryInit = () => {
+          if (getApp()) {
+            updateAuthUI();
+          } else {
+            setTimeout(tryInit, 100);
+          }
+        };
+        tryInit();
+
+        // Overlay controls - no longer needed since overlay is hidden
+        // const closeBtn = document.getElementById("overlay-close");
+        // if (closeBtn)
+        //   closeBtn.addEventListener("click", () => {
+        //     const overlay = document.getElementById("signin-overlay");
+        //     if (overlay) overlay.style.display = "none";
+        //   });
+
+        // Set Open Sheet link directly to mv-storage URL
+        const main = document.querySelector('[mv-app="habits"]');
+        const link = document.getElementById("open-sheet");
+        if (main && link) {
+          const storageURL = main.getAttribute("mv-storage") || "";
+          link.href = storageURL;
+        }
+
+        // CSV template generation (schema + 7 days)
+        const csvBtn = document.getElementById('download-csv');
+        if (csvBtn) {
+          csvBtn.addEventListener('click', () => {
+            const headers = [
+              'name','date','morningLight','workout','walk','fastingMet','guitar','stretch','journal','socialNight','notes','weekStart'
+            ];
+            const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+            const weekStart = (document.querySelector('[property="weekStart"]')||{}).value || '';
+            const rows = days.map(d => [d,'',0,0,0,0,0,0,0,0,'',weekStart]);
+            const csv = [headers.join(','), ...rows.map(r => r.map(v => typeof v === 'string' && v.includes(',') ? `"${v.replace(/"/g,'""')}"` : v).join(','))].join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'habit-week-template.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          });
+        }
+      });
+    </script>
+  </body>
+</html>
