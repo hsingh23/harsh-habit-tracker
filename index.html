@@ -577,6 +577,17 @@
             <i data-lucide="target" style="width: 20px; height: 20px"></i>
             Recent Progress Tracker
           </div>
+          <div class="flex items-center justify-between mb-4">
+            <div id="recentRangeLabel" class="text-xs uppercase font-medium" style="color: var(--muted);">Last 3 days</div>
+            <div class="flex items-center gap-2">
+              <button id="recentPrevBtn" class="btn btn-hover" style="padding: 8px 10px; line-height: 1;" onclick="changeRecentPage(-3)">
+                <i data-lucide="chevron-left" style="width: 16px; height: 16px"></i>
+              </button>
+              <button id="recentNextBtn" class="btn btn-hover" style="padding: 8px 10px; line-height: 1;" onclick="changeRecentPage(3)">
+                <i data-lucide="chevron-right" style="width: 16px; height: 16px"></i>
+              </button>
+            </div>
+          </div>
           <div id="recentHabits" class="space-y-6">
             <!-- Recent habits will be loaded here -->
           </div>
@@ -586,9 +597,20 @@
       <!-- Logbook: daily notes + summary (visible signed in/out) -->
       <div class="space-y-6">
         <div class="card" style="padding: 24px">
-          <div class="label-chip mb-6 flex items-center gap-2">
+          <div class="label-chip mb-4 flex items-center gap-2">
             <i data-lucide="book-open" style="width: 20px; height: 20px"></i>
             Logbook
+          </div>
+          <div class="flex items-center justify-between mb-4">
+            <div id="logbookWeekLabel" class="text-xs uppercase font-medium" style="color: var(--muted);">This Week</div>
+            <div class="flex items-center gap-2">
+              <button id="logbookPrevBtn" class="btn btn-hover" style="padding: 8px 10px; line-height: 1;" onclick="changeLogbookWeek(-1)">
+                <i data-lucide="chevron-left" style="width: 16px; height: 16px"></i>
+              </button>
+              <button id="logbookNextBtn" class="btn btn-hover" style="padding: 8px 10px; line-height: 1;" onclick="changeLogbookWeek(1)">
+                <i data-lucide="chevron-right" style="width: 16px; height: 16px"></i>
+              </button>
+            </div>
           </div>
           <div id="logbookList" class="space-y-4">
             <!-- Logbook entries render here -->
@@ -779,6 +801,9 @@
       let notificationQueue = [];
       let notificationTimeout = null;
       let charts = {};
+      let logbookWeekOffset = 0; // 0 = current week; -1 = previous week, etc.
+      let recentOffsetDays = 0; // 0.. negative in steps of 3 for recent tracker pagination
+      const LOGBOOK_MIN_DATE = new Date(2025, 10, 4); // Nov 4, 2025 (month is 0-indexed)
 
       // Habits Configuration
       const habitsConfig = [
@@ -1189,16 +1214,48 @@
         const today = new Date();
         const dates = [];
 
-        for (let i = 0; i < 3; i++) {
+        // Calculate 3-day window based on pagination offset
+        const startOffset = recentOffsetDays; // 0, -3, -6, ...
+        const visibleCount = 3;
+
+        for (let i = 0; i < visibleCount; i++) {
           const date = new Date(today);
-          date.setDate(date.getDate() - i);
+          date.setDate(today.getDate() + startOffset - i);
           const dayKey = getDayKey(date);
           dates.push({
             key: dayKey,
             label: getDateString(date),
             isToday: dayKey === currentDayKey,
-            isEditable: true, // Logged-in users can edit all 3 days
+            isEditable: true,
           });
+        }
+
+        // Update range label and buttons
+        const newest = new Date(today);
+        newest.setDate(today.getDate() + startOffset);
+        const oldest = new Date(today);
+        oldest.setDate(today.getDate() + startOffset - (visibleCount - 1));
+        const lbl = document.getElementById('recentRangeLabel');
+        if (lbl) {
+          lbl.textContent = `${oldest.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${newest.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+        }
+        const prevBtn = document.getElementById('recentPrevBtn');
+        const nextBtn = document.getElementById('recentNextBtn');
+        const oldestAllowed = new Date(LOGBOOK_MIN_DATE);
+        oldestAllowed.setHours(0,0,0,0);
+        const willOldest = new Date(oldest);
+        // Disable prev if this page would show any day before min date
+        const disablePrev = willOldest < oldestAllowed;
+        if (prevBtn) {
+          prevBtn.disabled = disablePrev;
+          prevBtn.style.opacity = disablePrev ? '0.5' : '1';
+          prevBtn.style.pointerEvents = disablePrev ? 'none' : 'auto';
+        }
+        if (nextBtn) {
+          const disableNext = startOffset >= 0;
+          nextBtn.disabled = disableNext;
+          nextBtn.style.opacity = disableNext ? '0.5' : '1';
+          nextBtn.style.pointerEvents = disableNext ? 'none' : 'auto';
         }
 
         container.innerHTML = dates
@@ -1305,6 +1362,23 @@
         lucide.createIcons({ attrs: { "stroke-width": 1.5 } });
       }
 
+      function changeRecentPage(deltaDays) {
+        recentOffsetDays += deltaDays;
+        if (recentOffsetDays > 0) recentOffsetDays = 0;
+        // Clamp to min date: ensure oldest date in page >= LOGBOOK_MIN_DATE
+        const today = new Date();
+        const oldest = new Date(today);
+        oldest.setDate(today.getDate() + recentOffsetDays - 2);
+        const min = new Date(LOGBOOK_MIN_DATE);
+        min.setHours(0,0,0,0);
+        if (oldest < min) {
+          // Move forward so oldest equals min
+          const diffDays = Math.ceil((min - oldest) / 86400000);
+          recentOffsetDays += diffDays;
+        }
+        renderRecentHabits();
+      }
+
       // Update notes for specific day
       function updateNotes(dayKey, value) {
         if (!currentUser) return; // read-only when signed out
@@ -1318,75 +1392,137 @@
         }
         habitsData[dayKey].notes = value;
         autoSave();
+        renderLogbook();
       }
 
-      // Render Logbook: list all days with notes and a summary of done/missed
+      // Render Logbook: paginate 1 week at a time (Sun-Sat)
       function renderLogbook() {
         const container = document.getElementById('logbookList');
+        const labelEl = document.getElementById('logbookWeekLabel');
+        const prevBtn = document.getElementById('logbookPrevBtn');
+        const nextBtn = document.getElementById('logbookNextBtn');
         if (!container) return;
 
-        // Collect entries with non-empty notes
-        const entries = Object.entries(habitsData)
-          .filter(([_, data]) => data && (data.notes || '').trim().length > 0)
-          .map(([key, data]) => ({ key, data, date: getDateFromKey(key) }))
-          .sort((a, b) => b.date - a.date); // newest first
+        // Compute current week start (Sunday)
+        const today = new Date();
+        const currentYear = today.getFullYear();
+        const currentWeekStart = new Date(today);
+        currentWeekStart.setHours(0,0,0,0);
+        currentWeekStart.setDate(currentWeekStart.getDate() - currentWeekStart.getDay());
 
-        if (entries.length === 0) {
-          container.innerHTML = `
-            <div class="text-sm" style="color: var(--muted);">No notes yet. Add a note in the Recent Progress Tracker.</div>
-          `;
-          return;
+        // Compute first allowed week start (aligned to Sunday) based on LOGBOOK_MIN_DATE
+        const minWeekStart = new Date(LOGBOOK_MIN_DATE);
+        minWeekStart.setHours(0,0,0,0);
+        minWeekStart.setDate(minWeekStart.getDate() - minWeekStart.getDay());
+        const weeksSinceMinStart = Math.floor((currentWeekStart - minWeekStart) / (7 * 86400000));
+        const minOffset = -weeksSinceMinStart; // oldest allowed week from LOGBOOK_MIN_DATE
+
+        // Clamp offset within current year
+        if (logbookWeekOffset < minOffset) logbookWeekOffset = minOffset;
+        if (logbookWeekOffset > 0) logbookWeekOffset = 0;
+
+        // Start of week for current offset
+        const start = new Date(currentWeekStart);
+        start.setDate(currentWeekStart.getDate() + logbookWeekOffset * 7);
+        const end = new Date(start);
+        end.setDate(start.getDate() + 6);
+
+        // Update label and button states
+        if (labelEl) {
+          const rangeLabel = `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+          labelEl.textContent = logbookWeekOffset === 0 ? `This Week · ${rangeLabel}` : rangeLabel;
+        }
+        if (prevBtn) {
+          const disabled = logbookWeekOffset <= minOffset;
+          prevBtn.disabled = disabled;
+          prevBtn.style.opacity = disabled ? '0.5' : '1';
+          prevBtn.style.pointerEvents = disabled ? 'none' : 'auto';
+        }
+        if (nextBtn) {
+          const disabled = logbookWeekOffset >= 0;
+          nextBtn.disabled = disabled;
+          nextBtn.style.opacity = disabled ? '0.5' : '1';
+          nextBtn.style.pointerEvents = disabled ? 'none' : 'auto';
         }
 
-        const html = entries.map(({ key, data, date }) => {
-          const dateLabel = getDateString(date);
-          const total = data.total || habitsConfig.length;
-          const doneIds = new Set(Object.entries(data.habits || {}).filter(([, v]) => !!v).map(([id]) => id));
-          const done = habitsConfig.filter(h => doneIds.has(h.id)).map(h => h.name);
-          const missed = habitsConfig.filter(h => !doneIds.has(h.id)).map(h => h.name);
-          const doneCount = done.length;
-          const missedCount = Math.max(0, total - doneCount);
+        // Build 7 days for this week (newest first)
+        const days = [];
+        for (let i = 0; i < 7; i++) {
+          const d = new Date(start);
+          d.setDate(start.getDate() + i);
+          days.push(d);
+        }
 
-          const doneList = done.length ? done.join(', ') : '—';
-          const missedList = missed.length ? missed.join(', ') : '—';
+        const entries = days
+          .slice() // copy
+          .reverse() // newest first (Sat -> Sun)
+          .map((date) => {
+            const key = getDayKey(date);
+            const data = habitsData[key] || { habits: {}, notes: '', completed: 0, total: habitsConfig.length };
+            const dateLabel = getDateString(date);
+            const total = data.total || habitsConfig.length;
+            const doneIds = new Set(Object.entries(data.habits || {}).filter(([, v]) => !!v).map(([id]) => id));
+            const done = habitsConfig.filter(h => doneIds.has(h.id)).map(h => h.name);
+            const missed = habitsConfig.filter(h => !doneIds.has(h.id)).map(h => h.name);
+            const doneCount = done.length;
+            const missedCount = Math.max(0, total - doneCount);
+            const note = (data.notes || '').trim();
 
-          return `
-            <div class="card" style="padding: 16px; background: #f9fafb;">
-              <div class="flex items-start justify-between mb-3">
-                <div>
-                  <div class="font-mono uppercase">${dateLabel}</div>
-                  <div class="text-xs" style="color: var(--muted);">${doneCount}/${total} done</div>
-                </div>
-                <div class="flex items-center gap-3 text-xs" style="color: var(--muted);">
-                  <div class="flex items-center gap-1"><i data-lucide="check" class="w-4 h-4"></i>${doneCount}</div>
-                  <div class="flex items-center gap-1"><i data-lucide="x" class="w-4 h-4"></i>${missedCount}</div>
-                </div>
-              </div>
-              <div class="card" style="padding: 12px; background: #fff;">
-                <div class="text-sm" style="white-space: pre-wrap;">${(data.notes || '').replace(/</g, '&lt;')}</div>
-              </div>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-                <div class="card" style="padding: 12px; background: #fff;">
-                  <div class="flex items-center gap-2 mb-1">
-                    <i data-lucide="check-circle" style="width: 16px; height: 16px; color: #16a34a;"></i>
-                    <div class="text-xs uppercase font-medium" style="color: var(--muted);">Done</div>
+            // Hide entries that have no notes AND nothing logged (all missed)
+            if (!note && doneCount === 0) return null;
+
+            const doneList = done.length ? done.join(', ') : '—';
+            const missedList = missed.length ? missed.join(', ') : '—';
+
+            return `
+              <div class="card" style="padding: 16px; background: #f9fafb;">
+                <div class="flex items-start justify-between mb-3">
+                  <div>
+                    <div class="font-mono uppercase">${dateLabel}</div>
+                    <div class="text-xs" style="color: var(--muted);">${doneCount}/${total} done</div>
                   </div>
-                  <div class="text-sm">${doneList}</div>
-                </div>
-                <div class="card" style="padding: 12px; background: #fff;">
-                  <div class="flex items-center gap-2 mb-1">
-                    <i data-lucide="circle-off" style="width: 16px; height: 16px; color: #9ca3af;"></i>
-                    <div class="text-xs uppercase font-medium" style="color: var(--muted);">Missed</div>
+                  <div class="flex items-center gap-3 text-xs" style="color: var(--muted);">
+                    <div class="flex items-center gap-1"><i data-lucide="check" class="w-4 h-4"></i>${doneCount}</div>
+                    <div class="flex items-center gap-1"><i data-lucide="x" class="w-4 h-4"></i>${missedCount}</div>
                   </div>
-                  <div class="text-sm">${missedList}</div>
+                </div>
+                ${note ? `
+                <div class="card" style="padding: 14px; background: #fff; border: 2px solid var(--ink); box-shadow: none;">
+                  <div class="text-base" style="font-size: 18px; line-height: 1.6; white-space: pre-wrap;">${note.replace(/&/g,'&amp;').replace(/</g, '&lt;').replace(/>/g,'&gt;')}</div>
+                </div>` : ''}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                  <div class="card" style="padding: 12px; background: #fff;">
+                    <div class="flex items-center gap-2 mb-1">
+                      <i data-lucide="check-circle" style="width: 16px; height: 16px; color: #16a34a;"></i>
+                      <div class="text-xs uppercase font-medium" style="color: var(--muted);">Done</div>
+                    </div>
+                    <div class="text-sm">${doneList}</div>
+                  </div>
+                  <div class="card" style="padding: 12px; background: #fff;">
+                    <div class="flex items-center gap-2 mb-1">
+                      <i data-lucide="circle-off" style="width: 16px; height: 16px; color: #9ca3af;"></i>
+                      <div class="text-xs uppercase font-medium" style="color: var(--muted);">Missed</div>
+                    </div>
+                    <div class="text-sm">${missedList}</div>
+                  </div>
                 </div>
               </div>
-            </div>
-          `;
-        }).join('');
+            `;
+          })
+          .filter(Boolean);
 
-        container.innerHTML = html;
+        if (entries.length === 0) {
+          container.innerHTML = `<div class="text-sm" style="color: var(--muted);">No entries for this week.</div>`;
+        } else {
+          container.innerHTML = entries.join('');
+        }
         lucide.createIcons({ attrs: { 'stroke-width': 1.5 } });
+      }
+
+      function changeLogbookWeek(delta) {
+        logbookWeekOffset += delta;
+        if (logbookWeekOffset > 0) logbookWeekOffset = 0; // don't go into future
+        renderLogbook();
       }
 
       // Habit Toggle
@@ -1468,6 +1604,7 @@
         for (let i = 0; i < 7; i++) {
           const date = new Date();
           date.setDate(date.getDate() - i);
+          if (date < LOGBOOK_MIN_DATE) break;
           const dayKey = getDayKey(date);
           const dayData = habitsData[dayKey];
           if (dayData && dayData.completed === dayData.total) {
@@ -1486,7 +1623,7 @@
 
         Object.entries(habitsData).forEach(([key, data]) => {
           const date = getDateFromKey(key);
-          if (date.getMonth() === currentMonth) {
+          if (date >= LOGBOOK_MIN_DATE && date.getMonth() === currentMonth) {
             monthlyTotal += (data.completed / data.total) * 100;
             monthlyCount++;
           }
@@ -1495,8 +1632,12 @@
         const monthlyAvg =
           monthlyCount > 0 ? Math.round(monthlyTotal / monthlyCount) : 0;
         document.getElementById("monthlyAvg").textContent = monthlyAvg + "%";
-        document.getElementById("totalDays").textContent =
-          Object.keys(habitsData).length;
+        // Total days since start date (inclusive)
+        const today = new Date();
+        const min = new Date(LOGBOOK_MIN_DATE);
+        min.setHours(0,0,0,0);
+        const diff = Math.floor((today.setHours(0,0,0,0) - min) / 86400000) + 1;
+        document.getElementById("totalDays").textContent = diff > 0 ? diff : 0;
       }
 
       // Render Charts
@@ -1528,9 +1669,9 @@
           date.setDate(startOfWeek.getDate() + i);
           const dayKey = getDayKey(date);
           const dayData = habitsData[dayKey];
-          const score = dayData
+          const score = (date < LOGBOOK_MIN_DATE) ? 0 : (dayData
             ? Math.round((dayData.completed / dayData.total) * 100)
-            : 0;
+            : 0);
 
           labels.push(date.toLocaleDateString("en-US", { weekday: "short" }));
           data.push(score);
@@ -1636,16 +1777,19 @@
 
         const habitData = habitsConfig.map((habit) => {
           let completedCount = 0;
+          let denom = 0;
           for (let i = 0; i < 7; i++) {
             const date = new Date(startOfWeek);
             date.setDate(startOfWeek.getDate() + i);
+            if (date < LOGBOOK_MIN_DATE) continue;
             const dayKey = getDayKey(date);
             const dayData = habitsData[dayKey];
             if (dayData && dayData.habits[habit.id]) {
               completedCount++;
             }
+            denom++;
           }
-          return Math.round((completedCount / 7) * 100);
+          return denom > 0 ? Math.round((completedCount / denom) * 100) : 0;
         });
 
         charts.radar = new Chart(ctx, {
@@ -1733,9 +1877,9 @@
           date.setDate(today.getDate() - i);
           const dayKey = getDayKey(date);
           const dayData = habitsData[dayKey];
-          const score = dayData
+          const score = (date < LOGBOOK_MIN_DATE) ? 0 : (dayData
             ? Math.round((dayData.completed / dayData.total) * 100)
-            : 0;
+            : 0);
 
           if (date.getMonth() === currentMonth) {
             labels.push(
@@ -1822,6 +1966,7 @@
         Object.entries(habitsData).forEach(([key, data]) => {
           const date = getDateFromKey(key);
           if (
+            date >= LOGBOOK_MIN_DATE &&
             date.getMonth() === currentMonth &&
             date.getFullYear() === currentYear
           ) {
@@ -1871,7 +2016,7 @@
             date.setDate(startOfWeek.getDate() + i);
             const dayKey = getDayKey(date);
             const dayData = habitsData[dayKey];
-            data.push(dayData && dayData.habits[habit.id] ? 1 : 0);
+            data.push(date < LOGBOOK_MIN_DATE ? 0 : (dayData && dayData.habits[habit.id] ? 1 : 0));
           }
 
           const hue = (habitIndex * 360) / habitsConfig.length;
